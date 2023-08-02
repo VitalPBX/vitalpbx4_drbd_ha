@@ -99,38 +99,6 @@ Install the necessary dependencies on both servers<br>
 root@vitalpbx-<strong>master-slave</strong>:~# apt -y install drbd-utils corosync pacemaker pcs chrony xfsprogs
 </pre>
 
-## Create authorization key for the Access between the two servers without credentials
-
-Create key in Server <strong>Master</strong>
-<pre>
-root@vitalpbx-<strong>master</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
-root@vitalpbx-<strong>master</strong>:~# ssh-copy-id root@<strong>192.168.10.32</strong>
-Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
-root@192.168.10.62's password: <strong>(remote server root’s password)</strong>
-
-Number of key(s) added: 1
-
-Now try logging into the machine, with:   "ssh 'root@192.168.10.32'"
-and check to make sure that only the key(s) you wanted were added. 
-
-root@vitalpbx-<strong>master</strong>:~#
-</pre>
-
-Create key in Server <strong>Slave</strong>
-<pre>
-root@vitalpbx-<strong>slave</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
-root@vitalpbx-<strong>slave</strong>:~# ssh-copy-id root@<strong>192.168.10.31</strong>
-Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
-root@192.168.10.61's password: <strong>(remote server root’s password)</strong>
-
-Number of key(s) added: 1
-
-Now try logging into the machine, with:   "ssh 'root@192.168.10.31'"
-and check to make sure that only the key(s) you wanted were added. 
-
-root@vitalpbx-<strong>slave</strong>:~#
-</pre>
-
 ## Create the partition on both servers
 Initialize the partition to allocate the available space on the hard disk. Do these on both servers.
 <pre>
@@ -242,6 +210,38 @@ Run the following command on the primary node to create an xfs filesystem on /de
 <pre>
 root@vitalpbx-<strong>master</strong>:~# mkfs.xfs /dev/drbd0
 root@vitalpbx-<strong>master</strong>:~# mount /dev/drbd0 /mnt
+</pre>
+
+## Create authorization key for the Access between the two servers without credentials
+
+Create key in Server <strong>Master</strong>
+<pre>
+root@vitalpbx-<strong>master</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
+root@vitalpbx-<strong>master</strong>:~# ssh-copy-id root@<strong>192.168.10.32</strong>
+Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
+root@192.168.10.62's password: <strong>(remote server root’s password)</strong>
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@192.168.10.32'"
+and check to make sure that only the key(s) you wanted were added. 
+
+root@vitalpbx-<strong>master</strong>:~#
+</pre>
+
+Create key in Server <strong>Slave</strong>
+<pre>
+root@vitalpbx-<strong>slave</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
+root@vitalpbx-<strong>slave</strong>:~# ssh-copy-id root@<strong>192.168.10.31</strong>
+Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
+root@192.168.10.61's password: <strong>(remote server root’s password)</strong>
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@192.168.10.31'"
+and check to make sure that only the key(s) you wanted were added. 
+
+root@vitalpbx-<strong>slave</strong>:~#
 </pre>
 
 ## Script
