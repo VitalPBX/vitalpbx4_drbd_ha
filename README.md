@@ -160,13 +160,13 @@ resource drbd0 {
      on vitalpbx-master.local {
           device /dev/drbd0;
           disk /dev/sda3;
-          address 192.168.10.31:7789;
+          address <strong>192.168.10.31</strong>:7789;
           meta-disk internal;
      }
      on vitalpbx-slave.local {
           device /dev/drbd0;
           disk /dev/sda3;
-          address 192.168.10.32:7789;
+          address <strong>192.168.10.32</strong>:7789;
           meta-disk internal;
      }
 handlers {
