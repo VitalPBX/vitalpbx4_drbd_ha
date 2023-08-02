@@ -249,6 +249,6 @@ Now copy and run the following script<br>
 <pre>
 root@vitalpbx-<strong>master</strong>:~# mkdir /usr/share/vitalpbx/ha
 root@vitalpbx-<strong>master</strong>:~# cd /usr/share/vitalpbx/ha
-root@vitalpbx-<strong>master</strong>:~# wget [https://raw.githubusercontent.com/VitalPBX/vitalpbx_ha_v4/master/vpbxha.sh](https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/vpbxha.sh)
+root@vitalpbx-<strong>master</strong>:~# wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# chmod +x vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# ./vpbxha.sh
