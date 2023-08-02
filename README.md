@@ -11,7 +11,7 @@ Make a high-availability cluster out of any pair of VitalPBX servers. VitalPBX c
 - We recommend that Server 2 is completely clean if nothing is installed, otherwise the Script could give errors and the process would not be completed.
 
 - ## Example:<br>
-
+![VitalPBX HA](https://github.com/VitalPBX/vitalpbx4_drbd_ha/blob/main/VitalPBX4_HA_DRBD.png)
 
 ## Prerequisites
 In order to install VitalPBX in high availability you need the following:<br>
