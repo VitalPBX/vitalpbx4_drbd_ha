@@ -252,7 +252,8 @@ root@vitalpbx-<strong>master</strong>:~# cd /usr/share/vitalpbx/ha
 root@vitalpbx-<strong>master</strong>:~# wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# chmod +x vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# ./vpbxha.sh
-
+</pre>
+  
 ## Change Servers Role
 
 To execute the process of changing the role, we recommend using the following command:<br>
@@ -299,7 +300,7 @@ To update VitalPBX to the latest version just follow the following steps:<br>
 ## Some useful commands
 • <strong>bascul</strong>, is used to change roles between high availability servers. If all is well, a confirmation question should appear if we wish to execute the action.<br>
 • <strong>role</strong>, shows the status of the current server. If all is well you should return Masters or Slaves.<br>
-• <strong>•	drbdsplit</strong>, solves DRBD split brain recovery.<br>
+• <strong>drbdsplit</strong>, solves DRBD split brain recovery.<br>
 • <strong>pcs resource refresh --full</strong>, to poll all resources even if the status is unknown, enter the following command.<br>
 • <strong>pcs cluster unstandby host</strong>, in some cases the bascul command does not finish tilting, which causes one of the servers to be in standby (stop), with this command the state is restored to normal.<br>
 
