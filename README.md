@@ -5,6 +5,7 @@ High Availability with DRBD (Distributed Replicated Block Device) is a popular s
 Make a high-availability cluster out of any pair of VitalPBX servers. VitalPBX can detect a range of failures on one VitalPBX server and automatically transfer control to the other server, resulting in a telephony environment with minimal down time.
 
 ### :warning:<strong>Important notes:</strong></span><br>
+- At the time of installation leave the largest amount of space on the hard drive to store the variable data on both servers.
 - If you are going to restore some Backup from another server that is not in HA, restore it first in the Master server before creating the HA. This should be done as the backup does not contain the firewall rules for HA to work.<br>
 - The VitalPBX team does not provide support for systems in an HA environment because it is not possible to determine the environment where it has been installed.
 - We recommend that Server 2 is completely clean if nothing is installed, otherwise the Script could give errors and the process would not be completed.
@@ -138,11 +139,124 @@ and check to make sure that only the key(s) you wanted were added.
 root@vitalpbx<strong>2</strong>:~#
 </pre>
 
+## Create the partition on both servers
+Initialize the partition to allocate the available space on the hard disk. Do these on both servers.
+<pre>
+root@vitalpbx-master-slave:~# fdisk /dev/sda
+Command (m for help): **n**
+Partition type:
+  p   primary (3 primary, 0 extended, 1 free)
+  e   extended
+Select (default e): **p**
+Selected partition 3 (take note of the assigned partition number as we will need it later)
+First sector (35155968-266338303, default 35155968): **[Enter]**
+Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): **[Enter]**
+Using default value 266338303
+Partition 4 of type Linux and of size 110.2 GiB is set
+Command (m for help): **t**
+Partition number (1-4, default 4): **3**
+Hex code (type L to list all codes): **8e**
+Changed type of partition 'Linux' to 'Linux LVM'
+Command (m for help): **w**
+</pre>
+
+Then, restart the servers so that the new table is available.
+<pre>
+root@vitalpbx-master-slave:~# reboot
+</pre>
+
+## Format the partition 
+Now, we will proceed to format the new partition in both servers with the following command: 
+<pre>
+root@vitalpbx-master-slave:~# mke2fs -j /dev/sda3
+root@vitalpbx-master-slave:~# dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
+</pre>
+
+## Configuring DRBD
+Load the module and enable the service on both nodes, using the follow command:
+<pre>
+root@vitalpbx-master-slave:~# modprobe drbd
+root@vitalpbx-master-slave:~# systemctl enable drbd.service
+</pre>
+
+Create a new global_common.conf file on both nodes with the following contents:
+<pre>
+root@vitalpbx-master-slave:~# mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
+root@vitalpbx-master-slave:~# nano /etc/drbd.d/global_common.conf
+global {
+  usage-count yes;
+}
+  common {
+net {
+  protocol C;
+  }
+}
+</pre>
+
+Next, we will need to create a new configuration file called /etc/drbd.d/drbd0.res for the new resource named drbd0, with the following contents:
+<pre>
+root@vitalpbx-master-slave:~# nano /etc/drbd.d/drbd0.res
+resource drbd0 {
+     on vitalpbx-master.local {
+          device /dev/drbd0;
+          disk /dev/sda3;
+          address 192.168.10.31:7789;
+          meta-disk internal;
+     }
+     on vitalpbx-slave.local {
+          device /dev/drbd0;
+          disk /dev/sda3;
+          address 192.168.10.32:7789;
+          meta-disk internal;
+     }
+handlers {
+     split-brain "/usr/lib/drbd/notify-split-brain.sh root";
+     }
+net  {
+     after-sb-0pri discard-zero-changes;
+     after-sb-1pri discard-secondary;
+     after-sb-2pri disconnect;
+     }
+}
+</pre>
+
+Initialize the meta data storage on each nodes by executing the following command on both nodes
+<pre>
+root@vitalpbx-master-slave:~# drbdadm create-md drbd0
+Writing meta data...
+New drbd meta data block successfully created.
+</pre>
+
+Let’s define the DRBD Primary node as first node “vitalpbx-master”
+<pre>
+root@vitalpbx-master:~# drbdadm up drbd0
+root@vitalpbx-master:~# drbdadm primary drbd0 --force
+</pre>
+
+On the Secondary node “vitalpbx-slave” run the following command to start the drbd0
+<pre>
+root@vitalpbx-slave:~#  drbdadm up drbd0
+</pre>
+
+You can check the current status of the synchronization while it’s being performed. The cat /proc/drbd command displays the creation and synchronization progress of the resource.
+<pre>
+root@vitalpbx-slave:~#  cat /proc/drbd 
+</pre>
+
+## Formatting DRBD Disk
+In order to test the DRBD functionality we need to Create a file system, mount the volume and write some data on primary node “vitalpbx-master” and finally switch the primary node to “vitalpbx-slave”
+
+Run the following command on the primary node to create an xfs filesystem on /dev/drbd0 and mount it to the mnt directory, using the following commands
+<pre>
+root@vitalpbx-master:~# mkfs.xfs /dev/drbd0
+root@vitalpbx-master:~# mount /dev/drbd0 /mnt
+</pre>
+
 ## Script
 Now copy and run the following script<br>
 <pre>
-root@vitalpbx<strong>1</strong>:~# mkdir /usr/share/vitalpbx/ha
-root@vitalpbx<strong>1</strong>:~# cd /usr/share/vitalpbx/ha
-root@vitalpbx<strong>1</strong>:~# wget https://raw.githubusercontent.com/VitalPBX/vitalpbx_ha_v4/master/vpbxha.sh
-root@vitalpbx<strong>1</strong>:~# chmod +x vpbxha.sh
-root@vitalpbx<strong>1</strong>:~# ./vpbxha.sh
+root@vitalpbx-<strong>master</strong>:~# mkdir /usr/share/vitalpbx/ha
+root@vitalpbx-<strong>master</strong>:~# cd /usr/share/vitalpbx/ha
+root@vitalpbx-<strong>master</strong>:~# wget https://raw.githubusercontent.com/VitalPBX/vitalpbx_ha_v4/master/vpbxha.sh
+root@vitalpbx-<strong>master</strong>:~# chmod +x vpbxha.sh
+root@vitalpbx-<strong>master</strong>:~# ./vpbxha.sh
