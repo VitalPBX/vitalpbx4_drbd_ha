@@ -1,5 +1,5 @@
 # VitalPBX High Availability with DRBD (Version 4)
-=====
+
 High Availability with DRBD (Distributed Replicated Block Device) is a popular solution for achieving data redundancy and fault tolerance in a clustered environment. DRBD is a distributed storage system that synchronously replicates data between two or more nodes in real-time. It ensures that data is consistent across all nodes, providing continuous access to critical data even in the event of a node failure.
 
 Make a high-availability cluster out of any pair of VitalPBX servers. VitalPBX can detect a range of failures on one VitalPBX server and automatically transfer control to the other server, resulting in a telephony environment with minimal down time.
