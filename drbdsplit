@@ -8,6 +8,5 @@ set -e
 drbdadm secondary drbd0
 drbdadm disconnect drbd0
 drbdadm -- --discard-my-data connect drbd0
-ssh root@$ip_slave "drbdadm connect drbd0"
 echo "Disk Status"
 drbdadm status
