@@ -275,7 +275,8 @@ Next we will show a short video how high availability works in VitalPBX<br>
 <div align="center">
   <a href="https://www.youtube.com/watch?v=3yoa3KXKMy0"><img src="https://img.youtube.com/vi/3yoa3KXKMy0/0.jpg" alt="High Availability demo video on VitalPBX"></a>
 </div>
-
+</pre>
+  
 ## Recommendations
 If you have to turn off both servers at the same time, we recommend that you start by turning off the one in Standby and then the Master<br>
 If the two servers stopped abruptly, always start first that you think you have the most up-to-date information and a few minutes later the other server<br>
