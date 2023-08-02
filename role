@@ -1,0 +1,50 @@
+#!/bin/bash
+# This code is the property of VitalPBX LLC Company
+# License: Proprietary
+# Date: 1-Agu-2023
+# Show the Role of Server.
+#Bash Colour Codes
+green="\033[00;32m"
+txtrst="\033[00;0m"
+linux_ver=`cat /etc/os-release | grep -e PRETTY_NAME | awk -F '=' '{print $2}' | xargs`
+vpbx_version=`aptitude versions vitalpbx | awk '{ print $2 }'`
+server_master=`pcs status resources | awk 'NR==1 {print $5}'`
+host=`hostname`
+if [[ "${server_master}" = "${host}" ]]; then
+        server_mode="Master"
+else
+        server_mode="Standby"
+fi
+logo='
+ _    _ _           _ ______ ______ _    _
+| |  | (_)_        | (_____ (____  \ \  / /
+| |  | |_| |_  ____| |_____) )___)  ) \/ /
+ \ \/ /| |  _)/ _  | |  ____/  __  ( )  (
+  \  / | | |_( ( | | | |    | |__)  ) /\ \\
+   \/  |_|\___)_||_|_|_|    |______/_/  \_\\
+'
+echo -e "
+${green}
+${logo}
+${txtrst}
+ Role           : $server_mode
+ Version        : ${vpbx_version//[[:space:]]}
+ Asterisk       : `asterisk -rx "core show version" 2>/dev/null| grep -ohe 'Asterisk [0-9.]*'`
+ Linux Version  : ${linux_ver}
+ Welcome to     : `hostname`
+ Uptime         : `uptime | grep -ohe 'up .*' | sed 's/up //g' | awk -F "," '{print $1}'`
+ Load           : `uptime | grep -ohe 'load average[s:][: ].*' | awk '{ print "Last Minute: " $3" Last 5 Minutes: "$4" Last 15 Minutes "$5 }'`
+ Users          : `uptime | grep -ohe '[0-9.*] user[s,]'`
+ IP Address     : ${green}`ip addr | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | xargs `${txtrst}
+ Clock          :`timedatectl | sed -n '/Local time/ s/^[ \t]*Local time:\(.*$\)/\1/p'`
+ NTP Sync.      :`timedatectl |awk -F: '/NTP service/ {print $2}'`
+"
+echo -e ""
+echo -e "************************************************************"
+echo -e "*                  Servers Status                          *"
+echo -e "************************************************************"
+echo -e "Master"
+pcs status resources
+echo -e ""
+echo -e "Servers Status"
+pcs cluster pcsd-status
