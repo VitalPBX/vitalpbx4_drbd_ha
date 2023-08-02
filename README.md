@@ -252,3 +252,56 @@ root@vitalpbx-<strong>master</strong>:~# cd /usr/share/vitalpbx/ha
 root@vitalpbx-<strong>master</strong>:~# wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# chmod +x vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# ./vpbxha.sh
+
+## Change Servers Role
+
+To execute the process of changing the role, we recommend using the following command:<br>
+
+<pre>
+[root@vitalpbx-master /]# bascul
+************************************************************
+*     Change the roles of servers in high availability     *
+* <strong>WARNING-WARNING-WARNING-WARNING-WARNING-WARNING-WARNING</strong>  *
+*All calls in progress will be lost and the system will be *
+*     be in an unavailable state for a few seconds.        *
+************************************************************
+Are you sure to switch from vitalpbx<strong>1</strong>.local to vitalpbx<strong>2</strong>.local? (yes,no) >
+</pre>
+
+This action convert the vitalpbx<strong>1</strong>.local to Standby and vitalpbx<strong>2</strong>.local to Master. If you want to return to default do the same again.<br>
+
+Next we will show a short video how high availability works in VitalPBX<br>
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=3yoa3KXKMy0"><img src="https://img.youtube.com/vi/3yoa3KXKMy0/0.jpg" alt="High Availability demo video on VitalPBX"></a>
+</div>
+
+## Recommendations
+If you have to turn off both servers at the same time, we recommend that you start by turning off the one in Standby and then the Master<br>
+If the two servers stopped abruptly, always start first that you think you have the most up-to-date information and a few minutes later the other server<br>
+If you want to update the version of VitalPBX we recommend you do it first on Server 1, then do a bascul and do it again on Server 2<br>
+
+## Update VitalPBX version
+
+To update VitalPBX to the latest version just follow the following steps:<br>
+1.- From your browser, go to ip 192.168.10.30<br>
+2.- Update VitalPBX from the interface<br>
+3.- Execute the following command in Master console<br>
+<pre>
+[root@vitalpbx1 /]# bascul
+</pre>
+4.- From your browser, go to ip 192.168.10.30 again<br>
+5.- Update VitalPBX from the interface<br>
+6.- Execute the following command in Master console<br>
+<pre>
+[root@vitalpbx1 /]# bascul
+</pre>
+
+## Some useful commands
+• <strong>bascul</strong>, is used to change roles between high availability servers. If all is well, a confirmation question should appear if we wish to execute the action.<br>
+• <strong>role</strong>, shows the status of the current server. If all is well you should return Masters or Slaves.<br>
+• <strong>•	drbdsplit</strong>, solves DRBD split brain recovery.<br>
+• <strong>pcs resource refresh --full</strong>, to poll all resources even if the status is unknown, enter the following command.<br>
+• <strong>pcs cluster unstandby host</strong>, in some cases the bascul command does not finish tilting, which causes one of the servers to be in standby (stop), with this command the state is restored to normal.<br>
+
+## More Information
+If you want more information that will help you solve problems about High Availability in VitalPBX we invite you to see the following manual<br>
