@@ -36,12 +36,12 @@ We will configure in each server the hosname and IP address.
 ### Server 1
 Change Hostname
 <pre>
-root@vitalpbx1:~# hostname vitalpbx1.local
+root@vitalpbx:~# hostname vitalpbx-master.local
 </pre>
 
 Change Ip Address, edit the following file with nano, /etc/network/interfaces
 <pre>
-root@vitalpbx1:~# nano /etc/network/interfaces
+root@vitalpbx-<strong>master</strong>:~# nano /etc/network/interfaces
 
 Change
 #The primary network interface
@@ -60,12 +60,12 @@ gateway 192.168.10.1
 ### Server 2
 Change Hostname
 <pre>
-root@vitalpbx2:~# hostname vitalpbx2.local
+root@vitalpbx:~# hostname vitalpbx-slave.local
 </pre>
 
 Change Ip Address, edit the following file with nano, /etc/network/interfaces
 <pre>
-root@vitalpbx2:~# nano /etc/network/interfaces
+root@vitalpbx-<strong>slave</strong>:~# nano /etc/network/interfaces
 
 Change
 #The primary network interface
@@ -82,18 +82,11 @@ gateway 192.168.10.1
 </pre>
 
 ## Hostname
-
-Configure the hostname of each server.
-<pre>
-root@vitalpbx-master:~# hostname vitalpbx-master.local
-root@vitalpbx-slave:~# hostname vitalpbx-slave.local
-</pre>
-
 Configure the hostname of each server in the /etc/hosts file, so that both servers see each other with the hostname.
 <pre>
-root@vitalpbx-master-slave:~# nano /etc/hosts
+root@vitalpbx-<strong>master-slave</strong>:~# nano /etc/hosts
 192.168.10.31 vitalpbx-master.local
-192.168.10.32 vitalpbx-salave.local
+192.168.10.32 vitalpbx-slave.local
 </pre>
 
 ## Bind Address
@@ -103,16 +96,15 @@ Also do it in SETTINGS/SIP Settings Tab NETWORK fields "TCP Bind Address" and "T
 ## Install Dependencies
 Install the necessary dependencies on both servers<br>
 <pre>
-root@vitalpbx-master:~# apt -y install drbd-utils corosync pacemaker pcs chrony xfsprogs
-root@vitalpbx-slave:~# apt -y install drbd-utils corosync pacemaker pcs chrony xfsprogs
+root@vitalpbx-<strong>master-slave</strong>:~# apt -y install drbd-utils corosync pacemaker pcs chrony xfsprogs
 </pre>
 
 ## Create authorization key for the Access between the two servers without credentials
 
-Create key in Server <strong>1</strong>
+Create key in Server <strong>Master</strong>
 <pre>
-root@vitalpbx<strong>1</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
-root@vitalpbx<strong>1</strong>:~# ssh-copy-id root@<strong>192.168.10.62</strong>
+root@vitalpbx-<strong>master</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
+root@vitalpbx-<strong>master</strong>:~# ssh-copy-id root@<strong>192.168.10.62</strong>
 Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
 root@192.168.10.62's password: <strong>(remote server root’s password)</strong>
 
@@ -121,13 +113,13 @@ Number of key(s) added: 1
 Now try logging into the machine, with:   "ssh 'root@192.168.10.62'"
 and check to make sure that only the key(s) you wanted were added. 
 
-root@vitalpbx<strong>1</strong>:~#
+root@vitalpbx-<strong>master</strong>:~#
 </pre>
 
-Create key in Server <strong>2</strong>
+Create key in Server <strong>Slave</strong>
 <pre>
-root@vitalpbx<strong>2</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
-root@vitalpbx<strong>2</strong>:~# ssh-copy-id root@<strong>192.168.10.61</strong>
+root@vitalpbx-<strong>slave</strong>:~# ssh-keygen -f /root/.ssh/id_rsa -t rsa -N '' >/dev/null
+root@vitalpbx-<strong>slave</strong>:~# ssh-copy-id root@<strong>192.168.10.61</strong>
 Are you sure you want to continue connecting (yes/no/[fingerprint])? <strong>yes</strong>
 root@192.168.10.61's password: <strong>(remote server root’s password)</strong>
 
@@ -136,53 +128,53 @@ Number of key(s) added: 1
 Now try logging into the machine, with:   "ssh 'root@192.168.10.61'"
 and check to make sure that only the key(s) you wanted were added. 
 
-root@vitalpbx<strong>2</strong>:~#
+root@vitalpbx-<strong>slave</strong>:~#
 </pre>
 
 ## Create the partition on both servers
 Initialize the partition to allocate the available space on the hard disk. Do these on both servers.
 <pre>
-root@vitalpbx-master-slave:~# fdisk /dev/sda
-Command (m for help): **n**
+root@vitalpbx-<strong>master-slave</strong>:~# fdisk /dev/sda
+Command (m for help): <strong>n</strong>
 Partition type:
   p   primary (3 primary, 0 extended, 1 free)
   e   extended
-Select (default e): **p**
+Select (default e): <strong>p</strong>
 Selected partition 3 (take note of the assigned partition number as we will need it later)
-First sector (35155968-266338303, default 35155968): **[Enter]**
-Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): **[Enter]**
+First sector (35155968-266338303, default 35155968): <strong>[Enter]</strong>
+Last sector, +sectors or +size{K,M,G} (35155968-266338303, default 266338303): <strong>[Enter]</strong>
 Using default value 266338303
 Partition 4 of type Linux and of size 110.2 GiB is set
-Command (m for help): **t**
-Partition number (1-4, default 4): **3**
-Hex code (type L to list all codes): **8e**
+Command (m for help): <strong>t</strong>
+Partition number (1-4, default 4): <strong>3</strong>
+Hex code (type L to list all codes): <strong>8e</strong>
 Changed type of partition 'Linux' to 'Linux LVM'
-Command (m for help): **w**
+Command (m for help): <strong>w</strong>
 </pre>
 
 Then, restart the servers so that the new table is available.
 <pre>
-root@vitalpbx-master-slave:~# reboot
+root@vitalpbx-<strong>master-slave</strong>:~# reboot
 </pre>
 
 ## Format the partition 
 Now, we will proceed to format the new partition in both servers with the following command: 
 <pre>
-root@vitalpbx-master-slave:~# mke2fs -j /dev/sda3
-root@vitalpbx-master-slave:~# dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
+root@vitalpbx-<strong>master-slave</strong>:~# mke2fs -j /dev/sda3
+root@vitalpbx-<strong>master-slave</strong>:~# dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
 </pre>
 
 ## Configuring DRBD
 Load the module and enable the service on both nodes, using the follow command:
 <pre>
-root@vitalpbx-master-slave:~# modprobe drbd
-root@vitalpbx-master-slave:~# systemctl enable drbd.service
+root@vitalpbx-<strong>master-slave</strong>:~# modprobe drbd
+root@vitalpbx-<strong>master-slave</strong>:~# systemctl enable drbd.service
 </pre>
 
 Create a new global_common.conf file on both nodes with the following contents:
 <pre>
-root@vitalpbx-master-slave:~# mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
-root@vitalpbx-master-slave:~# nano /etc/drbd.d/global_common.conf
+root@vitalpbx-<strong>master-slave</strong>:~# mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
+root@vitalpbx-<strong>master-slave</strong>:~# nano /etc/drbd.d/global_common.conf
 global {
   usage-count yes;
 }
@@ -195,7 +187,7 @@ net {
 
 Next, we will need to create a new configuration file called /etc/drbd.d/drbd0.res for the new resource named drbd0, with the following contents:
 <pre>
-root@vitalpbx-master-slave:~# nano /etc/drbd.d/drbd0.res
+root@vitalpbx-<strong>master-slave</strong>:~# nano /etc/drbd.d/drbd0.res
 resource drbd0 {
      on vitalpbx-master.local {
           device /dev/drbd0;
@@ -222,25 +214,25 @@ net  {
 
 Initialize the meta data storage on each nodes by executing the following command on both nodes
 <pre>
-root@vitalpbx-master-slave:~# drbdadm create-md drbd0
+root@vitalpbx-<strong>master-slave</strong>:~# drbdadm create-md drbd0
 Writing meta data...
 New drbd meta data block successfully created.
 </pre>
 
 Let’s define the DRBD Primary node as first node “vitalpbx-master”
 <pre>
-root@vitalpbx-master:~# drbdadm up drbd0
-root@vitalpbx-master:~# drbdadm primary drbd0 --force
+root@vitalpbx-<strong>master</strong>:~# drbdadm up drbd0
+root@vitalpbx-<strong>master</strong>:~# drbdadm primary drbd0 --force
 </pre>
 
 On the Secondary node “vitalpbx-slave” run the following command to start the drbd0
 <pre>
-root@vitalpbx-slave:~#  drbdadm up drbd0
+root@vitalpbx-<strong>slave</strong>:~#  drbdadm up drbd0
 </pre>
 
 You can check the current status of the synchronization while it’s being performed. The cat /proc/drbd command displays the creation and synchronization progress of the resource.
 <pre>
-root@vitalpbx-slave:~#  cat /proc/drbd 
+root@vitalpbx-<strong>master-slave</strong>:~#  cat /proc/drbd 
 </pre>
 
 ## Formatting DRBD Disk
@@ -248,8 +240,8 @@ In order to test the DRBD functionality we need to Create a file system, mount t
 
 Run the following command on the primary node to create an xfs filesystem on /dev/drbd0 and mount it to the mnt directory, using the following commands
 <pre>
-root@vitalpbx-master:~# mkfs.xfs /dev/drbd0
-root@vitalpbx-master:~# mount /dev/drbd0 /mnt
+root@vitalpbx-<strong>master</strong>:~# mkfs.xfs /dev/drbd0
+root@vitalpbx-<strong>master</strong>:~# mount /dev/drbd0 /mnt
 </pre>
 
 ## Script
