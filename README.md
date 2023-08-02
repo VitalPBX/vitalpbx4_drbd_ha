@@ -307,7 +307,7 @@ To update VitalPBX to the latest version just follow the following steps:<br>
 
 ## More Information
 If you want more information that will help you solve problems about High Availability in VitalPBX we invite you to see the following manual<br>
-[High Availability Manual, step by step](https://downloads.vitalpbx.com/vitalpbx/manuals/VitalPBXHighAvailabilityV4.pdf)
+[High Availability Manual, step by step](https://github.com/VitalPBX/vitalpbx4_drbd_ha/blob/main/VitalPBXHighAvailabilityV4_DRBD_2023.pdf)
 
 <strong>CONGRATULATIONS</strong>, you have installed and tested the high availability in <strong>VitalPBX 4</strong><br>
 :+1:
