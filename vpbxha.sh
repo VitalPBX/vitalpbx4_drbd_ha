@@ -511,6 +511,8 @@ echo -e "************************************************************"
 wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/drbdsplit
 yes | cp -fr drbdsplit /usr/local/bin/drbdsplit
 chmod +x /usr/local/bin/drbdsplit
+scp /usr/local/bin/drbdsplit root@$ip_standby:/usr/local/bin/drbdsplit
+ssh root@$ip_standby 'chmod +x /usr/local/bin/drbdsplit'
 echo -e "*** Done Step 20 ***"
 echo -e "20"	> step.txt
 
