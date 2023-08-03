@@ -117,54 +117,60 @@ case $step in
 		start="create_hostname"
   	;;
 	2)
-		start="rename_tenant_id_in_server2"
-  	;;
-	3)
 		start="configuring_firewall"
   	;;
-	4)
-		start="create_lsyncd_config_file"
-  	;;
-	5)
-		start="create_mariadb_replica"
-	;;
-	6)
+	3)
 		start="create_hacluster_password"
   	;;
-	7)
+	4)
 		start="starting_pcs"
   	;;
-	8)
+	5)
 		start="auth_hacluster"
-  	;;
-	9)
+	;;
+	6)
 		start="creating_cluster"
   	;;
-	10)
+	7)
 		start="starting_cluster"
   	;;
-	11)
+	8)
 		start="creating_floating_ip"
   	;;
-	12)
+	9)
+		start="create_drbd_resource"
+  	;;
+	10)
+		start="create_filesystem_resource"
+  	;;
+	11)
 		start="disable_services"
+  	;;
+	12)
+		start="create_mariadb_service"
 	;;
 	13)
 		start="create_asterisk_service"
 	;;
 	14)
-		start="create_lsyncd_service"
+		start="copy_asterisk_files"
 	;;
 	15)
-		start="vitalpbx_create_bascul"
+		start="create_vitalpbx_service"
 	;;
 	16)
-		start="vitalpbx_create_role"
+		start="create_fail2ban_service"
 	;;
 	17)
-		start="vitalpbx_create_mariadbfix"
+		start="vitalpbx_create_bascul"
 	;;
 	18)
+		start="vitalpbx_create_role"
+	;;
+	19)
+		start="vitalpbx_create_mariadbfix"
+	;;
+	20)
 		start="ceate_welcome_message"
 	;;
 esac
@@ -182,16 +188,6 @@ ssh root@$ip_standby "echo -e '$ip_master \t$host_master' >> /etc/hosts"
 ssh root@$ip_standby "echo -e '$ip_standby \t$host_standby' >> /etc/hosts"
 echo -e "*** Done Step 2 ***"
 echo -e "2"	> step.txt
-
-rename_tenant_id_in_server2:
-echo -e "************************************************************"
-echo -e "*                Remove Tenant in Server 2                 *"
-echo -e "************************************************************"
-remote_tenant_id=`ssh root@$ip_standby "ls /var/lib/vitalpbx/static/"`
-ssh root@$ip_standby "rm -rf /var/lib/vitalpbx/static/$remote_tenant_id"
-scp /etc/vitalpbx/vitalpbx-maint.conf root@$ip_standby:/etc/vitalpbx/vitalpbx-maint.conf
-echo -e "*** Done Step 3 ***"
-echo -e "3"	> step.txt
 
 configuring_firewall:
 echo -e "************************************************************"
@@ -250,8 +246,8 @@ last_index=$last_index+1
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_whitelist (host, description, \`default\`) VALUES ('$ip_master', 'Server 1 IP', 'no')"
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_whitelist (host, description, \`default\`) VALUES ('$ip_standby', 'Server 2 IP', 'no')"
-echo -e "*** Done Step 4 ***"
-echo -e "4"	> step.txt
+echo -e "*** Done Step 3 ***"
+echo -e "3"	> step.txt
 
 create_hacluster_password:
 echo -e "************************************************************"
@@ -259,8 +255,8 @@ echo -e "*     Create password for hacluster in Master/Standby      *"
 echo -e "************************************************************"
 echo hacluster:$hapassword | chpasswd
 ssh root@$ip_standby "echo hacluster:$hapassword | chpasswd"
-echo -e "*** Done Step 5 ***"
-echo -e "5"	> step.txt
+echo -e "*** Done Step 4 ***"
+echo -e "4"	> step.txt
 
 starting_pcs:
 echo -e "************************************************************"
@@ -274,8 +270,8 @@ systemctl enable pacemaker.service
 ssh root@$ip_standby "systemctl enable pcsd.service"
 ssh root@$ip_standby "systemctl enable corosync.service"
 ssh root@$ip_standby "systemctl enable pacemaker.service"
-echo -e "*** Done Step 6 ***"
-echo -e "6"	> step.txt
+echo -e "*** Done Step 5 ***"
+echo -e "5"	> step.txt
 
 auth_hacluster:
 echo -e "************************************************************"
@@ -283,16 +279,16 @@ echo -e "*            Server Authenticate in Master                 *"
 echo -e "************************************************************"
 pcs cluster destroy
 pcs host auth $host_master $host_standby -u hacluster -p $hapassword
-echo -e "*** Done Step 7 ***"
-echo -e "7"	> step.txt
+echo -e "*** Done Step 6 ***"
+echo -e "6"	> step.txt
 
 creating_cluster:
 echo -e "************************************************************"
 echo -e "*              Creating Cluster in Master                  *"
 echo -e "************************************************************"
 pcs cluster setup cluster_vitalpbx $host_master $host_standby --force
-echo -e "*** Done Step 8 ***"
-echo -e "8"	> step.txt
+echo -e "*** Done Step 7 ***"
+echo -e "7"	> step.txt
 
 starting_cluster:
 echo -e "************************************************************"
@@ -302,8 +298,8 @@ pcs cluster start --all
 pcs cluster enable --all
 pcs property set stonith-enabled=false
 pcs property set no-quorum-policy=ignore
-echo -e "*** Done Step 9 ***"
-echo -e "9"	> step.txt
+echo -e "*** Done Step 8 ***"
+echo -e "8"	> step.txt
 
 creating_floating_ip:
 echo -e "************************************************************"
@@ -312,8 +308,8 @@ echo -e "************************************************************"
 pcs resource create virtual_ip ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask=$ip_floating_mask op monitor interval=30s on-fail=restart
 pcs cluster cib drbd_cfg
 pcs cluster cib-push drbd_cfg
-echo -e "*** Done Step 10 ***"
-echo -e "10"	> step.txt
+echo -e "*** Done Step 9 ***"
+echo -e "9"	> step.txt
 
 create_drbd_resource:
 echo -e "************************************************************"
@@ -322,8 +318,8 @@ echo -e "************************************************************"
 pcs -f drbd_cfg resource create DrbdData ocf:linbit:drbd drbd_resource=drbd0 op monitor interval=60s
 pcs -f drbd_cfg resource promotable DrbdData promoted-max=1 promoted-node-max=1 clone-max=2 clone-node-max=1 notify=true
 pcs cluster cib-push drbd_cfg 
-echo -e "*** Done Step 11 ***"
-echo -e "11"	> step.txt
+echo -e "*** Done Step 10 ***"
+echo -e "10"	> step.txt
 
 create_filesystem_resource:
 echo -e "************************************************************"
@@ -336,8 +332,8 @@ pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
 pcs -f fs_cfg constraint colocation add DrbdFS with virtual_ip INFINITY
 pcs -f fs_cfg constraint order virtual_ip then DrbdFS
 pcs cluster cib-push fs_cfg 
-echo -e "*** Done Step 12 ***"
-echo -e "12"	> step.txt
+echo -e "*** Done Step 11 ***"
+echo -e "11"	> step.txt
 
 disable_services:
 echo -e "************************************************************"
@@ -359,32 +355,35 @@ ssh root@$ip_standby "systemctl disable asterisk"
 ssh root@$ip_standby "systemctl stop asterisk"
 ssh root@$ip_standby "systemctl disable vpbx-monitor"
 ssh root@$ip_standby "systemctl stop vpbx-monitor"
-echo -e "*** Done Step 13 ***"
-echo -e "13"	> step.txt
+echo -e "*** Done Step 12 ***"
+echo -e "12"	> step.txt
 
 create_mariadb_service:
 echo -e "************************************************************"
-echo -e "*          Create asterisk Service in Server 1             *"
+echo -e "*          Create MariaDB Service in Server 1              *"
 echo -e "************************************************************"
 mkdir /mnt/mysql
 mkdir /mnt/mysql/data
-chown mysql:mysql /mnt/mysql
-chown mysql:mysql /mnt/mysql/data
 cp -aR /var/lib/mysql/* /mnt/mysql/data
+chown -R mysql:mysql /mnt/mysql
 sed -i 's/var\/lib\/mysql/mnt\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
-pcs resource create mysql ocf:heartbeat:mysql binary="/usr/bin/mysqld_safe" config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/mnt/mysql/data" pid="/var/lib/mysql/mysql.pid" socket="/var/lib/mysql/mysql.sock" additional_parameters="--bind-address=0.0.0.0" op start timeout=60s op stop timeout=60s op monitor interval=20s timeout=30s on-fail=standby 
+ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/mnt\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+pcs resource create mysql service:mariadb op monitor interval=30s 
 pcs cluster cib fs_cfg
-pcs cluster cib-push fs_cfg --config
+pcs cluster cib-push fs_cfg
 pcs -f fs_cfg constraint colocation add mysql with virtual_ip INFINITY
 pcs -f fs_cfg constraint order DrbdFS then mysql
-pcs cluster cib-push fs_cfg --config
-echo -e "*** Done Step 14 ***"
-echo -e "14"	> step.txt
+pcs cluster cib-push fs_cfg
+echo -e "*** Done Step 13 ***"
+echo -e "13"	> step.txt
 
 create_asterisk_service:
 echo -e "************************************************************"
-echo -e "*          Create asterisk Service in Server 1             *"
+echo -e "*          Create Asterisk Service in Server 1             *"
 echo -e "************************************************************"
+sed -i 's/RestartSec=10/RestartSec=1/g'  /usr/lib/systemd/system/asterisk.service
+sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
+sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
 pcs resource create asterisk service:asterisk op monitor interval=30s
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg --config
@@ -397,8 +396,83 @@ pcs cluster cib-push fs_cfg --config
 pcs resource update asterisk op stop timeout=120s
 pcs resource update asterisk op start timeout=120s
 pcs resource update asterisk op restart timeout=120s
+echo -e "*** Done Step 14 ***"
+echo -e "14"	> step.txt
+
+copy_asterisk_files:
+echo -e "************************************************************"
+echo -e "*            Copy Asterisk File in DRBD Disk               *"
+echo -e "************************************************************"
+tar -zcvf var-asterisk.tgz /var/log/asterisk 
+tar -zcvf var-lib-asterisk.tgz /var/lib/asterisk
+tar -zcvf var-lib-vitalpbx.tgz /var/lib/vitalpbx
+tar -zcvf usr-lib-asterisk.tgz /usr/lib/asterisk
+tar -zcvf var-spool-asterisk.tgz /var/spool/asterisk
+tar -zcvf etc-asterisk.tgz /etc/asterisk
+tar xvfz var-asterisk.tgz -C /mnt/
+tar xvfz var-lib-asterisk.tgz -C /mnt/
+tar xvfz var-lib-vitalpbx.tgz -C /mnt/
+tar xvfz usr-lib-asterisk.tgz -C /mnt/
+tar xvfz var-spool-asterisk.tgz -C /mnt/
+tar xvfz etc-asterisk.tgz -C /mnt/
+rm -rf /var/log/asterisk 
+rm -rf /var/lib/asterisk
+rm -rf /var/lib/vitalpbx 
+rm -rf /usr/lib/asterisk
+rm -rf /var/spool/asterisk
+rm -rf /etc/asterisk 
+ln -s /mnt/var/log/asterisk /var/log/asterisk 
+ln -s /mnt/var/lib/asterisk /var/lib/asterisk
+ln -s /mnt/var/lib/vitalpbx /var/lib/vitalpbx 
+ln -s /mnt/usr/lib/asterisk /usr/lib/asterisk 
+ln -s /mnt/var/spool/asterisk /var/spool/asterisk 
+ln -s /mnt/etc/asterisk /etc/asterisk
+rm -rf var-asterisk.tgz
+rm -rf var-lib-asterisk.tgz
+rm -rf var-lib-vitalpbx.tgz
+rm -rf usr-lib-asterisk.tgz
+rm -rf var-spool-asterisk.tgz
+rm -rf etc-asterisk.tgz
+ssh root@$ip_standby 'rm -rf /var/log/asterisk'
+ssh root@$ip_standby 'rm -rf /var/lib/asterisk'
+ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
+ssh root@$ip_standby 'rm -rf /usr/lib/asterisk'
+ssh root@$ip_standby 'rm -rf /var/spool/asterisk'
+ssh root@$ip_standby 'rm -rf /etc/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/log/asterisk /var/log/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/lib/asterisk /var/lib/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/lib/vitalpbx /var/lib/vitalpbx'
+ssh root@$ip_standby 'ln -s /mnt/usr/lib/asterisk /usr/lib/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/spool/asterisk /var/spool/asterisk' 
+ssh root@$ip_standby 'ln -s /mnt/etc/asterisk /etc/asterisk'
 echo -e "*** Done Step 15 ***"
 echo -e "15"	> step.txt
+
+create_vitalpbx_service:
+echo -e "************************************************************"
+echo -e "*                 Create VitalPBX Service                  *"
+echo -e "************************************************************"
+pcs resource create vpbx-monitor service:vpbx-monitor op monitor interval=30s
+pcs cluster cib fs_cfg 
+pcs cluster cib-push fs_cfg 
+pcs -f fs_cfg constraint colocation add vpbx-monitor with virtual_ip INFINITY 
+pcs -f fs_cfg constraint order asterisk then vpbx-monitor 
+pcs cluster cib-push fs_cfg 
+echo -e "*** Done Step 16 ***"
+echo -e "16"	> step.txt
+
+create_fail2ban_service:
+echo -e "************************************************************"
+echo -e "*                 Create fail2ban Service                  *"
+echo -e "************************************************************"
+pcs resource create fail2ban service:fail2ban op monitor interval=30s
+pcs cluster cib fs_cfg 
+pcs cluster cib-push fs_cfg 
+pcs -f fs_cfg constraint colocation add fail2ban with virtual_ip INFINITY 
+pcs -f fs_cfg constraint order asterisk then fail2ban 
+pcs cluster cib-push fs_cfg
+echo -e "*** Done Step 17 ***"
+echo -e "17"	> step.txt
 
 vitalpbx_create_bascul:
 echo -e "************************************************************"
@@ -409,8 +483,8 @@ yes | cp -fr bascul /usr/local/bin/bascul
 chmod +x /usr/local/bin/bascul
 scp /usr/local/bin/bascul root@$ip_standby:/usr/local/bin/bascul
 ssh root@$ip_standby 'chmod +x /usr/local/bin/bascul'
-echo -e "*** Done Step 16 ***"
-echo -e "16"	> step.txt
+echo -e "*** Done Step 18 ***"
+echo -e "18"	> step.txt
 
 vitalpbx_create_role:
 echo -e "************************************************************"
@@ -421,8 +495,8 @@ yes | cp -fr role /usr/local/bin/role
 chmod +x /usr/local/bin/role
 scp /usr/local/bin/role root@$ip_standby:/usr/local/bin/role
 ssh root@$ip_standby 'chmod +x /usr/local/bin/role'
-echo -e "*** Done Step 17 ***"
-echo -e "17"	> step.txt
+echo -e "*** Done Step 19 ***"
+echo -e "19"	> step.txt
 
 vitalpbx_create_mariadbfix:
 echo -e "************************************************************"
@@ -432,8 +506,8 @@ wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/drbdsplit
 yes | cp -fr mariadbfix /usr/local/bin/drbdsplit
 yes | cp -fr config.txt /usr/local/bin/config.txt
 chmod +x /usr/local/bin/mariadbfix
-echo -e "*** Done Step 18 ***"
-echo -e "18"	> step.txt
+echo -e "*** Done Step 20 ***"
+echo -e "20"	> step.txt
 
 ceate_welcome_message:
 echo -e "************************************************************"
@@ -444,8 +518,8 @@ chmod 755 /etc/update-motd.d/20-vitalpbx
 echo -e "*** Done ***"
 scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
 ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
-echo -e "*** Done Step 19 END ***"
-echo -e "19"	> step.txt
+echo -e "*** Done Step 21 END ***"
+echo -e "21"	> step.txt
 
 vitalpbx_cluster_ok:
 echo -e "************************************************************"
