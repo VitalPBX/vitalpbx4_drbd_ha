@@ -168,7 +168,7 @@ case $step in
 		start="vitalpbx_create_role"
 	;;
 	19)
-		start="vitalpbx_create_mariadbfix"
+		start="vitalpbx_create_drbdsplit"
 	;;
 	20)
 		start="ceate_welcome_message"
@@ -498,14 +498,13 @@ ssh root@$ip_standby 'chmod +x /usr/local/bin/role'
 echo -e "*** Done Step 19 ***"
 echo -e "19"	> step.txt
 
-vitalpbx_create_mariadbfix:
+vitalpbx_create_drbdsplit:
 echo -e "************************************************************"
 echo -e "*           Creating VitalPBX mariadbfix Command           *"
 echo -e "************************************************************"
 wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/drbdsplit
-yes | cp -fr mariadbfix /usr/local/bin/drbdsplit
-yes | cp -fr config.txt /usr/local/bin/config.txt
-chmod +x /usr/local/bin/mariadbfix
+yes | cp -fr drbdsplit /usr/local/bin/drbdsplit
+chmod +x /usr/local/bin/drbdsplit
 echo -e "*** Done Step 20 ***"
 echo -e "20"	> step.txt
 
