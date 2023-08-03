@@ -109,6 +109,12 @@ echo -e "$host_master"
 echo -e "$host_standby"
 echo -e "*** Done ***"
 
+stepFile=step.txt
+	if [ -f $stepFile ]; then
+		step=`cat $stepFile`
+	else
+		step=0
+	fi
 echo -e "Start in step: " $step
 
 start="create_hostname"
