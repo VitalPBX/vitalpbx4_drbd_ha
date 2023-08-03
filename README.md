@@ -210,7 +210,7 @@ Run the following command on the primary node to create an xfs filesystem on /de
 <pre>
 root@vitalpbx-<strong>master</strong>:~# mkfs.xfs /dev/drbd0
 root@vitalpbx-<strong>master</strong>:~# mkdir /mnt/replica
-root@vitalpbx-<strong>master</strong>:~# mount /dev/drbd0 /mnt
+root@vitalpbx-<strong>master</strong>:~# mount /dev/drbd0 /mnt/replica
 </pre>
 
 ## Create authorization key for the Access between the two servers without credentials
