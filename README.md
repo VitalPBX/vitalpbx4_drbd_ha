@@ -209,6 +209,7 @@ In order to test the DRBD functionality we need to Create a file system, mount t
 Run the following command on the primary node to create an xfs filesystem on /dev/drbd0 and mount it to the mnt directory, using the following commands
 <pre>
 root@vitalpbx-<strong>master</strong>:~# mkfs.xfs /dev/drbd0
+root@vitalpbx-<strong>master</strong>:~# mkdir /mnt/replica
 root@vitalpbx-<strong>master</strong>:~# mount /dev/drbd0 /mnt
 </pre>
 
