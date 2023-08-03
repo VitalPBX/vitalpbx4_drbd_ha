@@ -103,8 +103,8 @@ EOF
 echo -e "************************************************************"
 echo -e "*            Get the hostname in Master and Standby         *"
 echo -e "************************************************************"
-host_master=`hostname -f`
-host_standby=`ssh root@$ip_standby 'hostname -f'`
+host_master=`hostname`
+host_standby=`ssh root@$ip_standby 'hostname'`
 echo -e "$host_master"
 echo -e "$host_standby"
 echo -e "*** Done ***"
