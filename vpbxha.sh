@@ -372,8 +372,8 @@ mkdir /mnt/replica/mysql
 mkdir /mnt/replica/mysql/data
 cp -aR /var/lib/mysql/* /mnt/replica/mysql/data
 chown -R mysql:mysql /mnt/replica/mysql
-sed -i 's/var\/lib\/mysql/mnt\replica\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
-ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/mnt\replica\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+sed -i 's/var\/lib\/mysql/mnt\/replica\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/mnt\/replica\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 pcs resource create mysql service:mariadb op monitor interval=30s 
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg
