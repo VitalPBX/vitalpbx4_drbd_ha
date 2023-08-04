@@ -235,13 +235,13 @@ root@vitalpbx-<strong>master</strong>:~# bascul
 • <strong>drbdsplit</strong>, solves DRBD split brain recovery.<br>
 • <strong>pcs resource refresh --full</strong>, to poll all resources even if the status is unknown, enter the following command.<br>
 • <strong>pcs cluster unstandby host</strong>, in some cases the bascul command does not finish tilting, which causes one of the servers to be in standby (stop), with this command the state is restored to normal.<br>
-•	<strong>pcs resource delete</strong>, removes the resource so it can be created.
-•	<strong>pcs resource create</strong>, create the resource.
-•	<strong>drbdadm status</strong>, shows the integrity status of the disks that are being shared between both servers in high availability. If for some reason the status of Connecting or Standalone returns to us, wait a while and if the state remains it is because there are synchronization problems between both servers, and you should execute the drbdsplit command.
-•	<strong>cat /proc/drbd</strong>, the state of your device is kept in /proc/drbd.
-•	<strong>drbdadm role drbd0</strong>, another way to check the role of the block device.
-•	<strong>drbdadm primary drbd0</strong>, switch the DRBD block device to Primary using drbdadm.
-•	<strong>drbdadm secondary drbd0</strong>, switch the DRBD block device to Secondary using drbdadm.
+•	<strong>pcs resource delete</strong>, removes the resource so it can be created.<br>
+•	<strong>pcs resource create</strong>, create the resource.<br>
+•	<strong>drbdadm status</strong>, shows the integrity status of the disks that are being shared between both servers in high availability. If for some reason the status of Connecting or Standalone returns to us, wait a while and if the state remains it is because there are synchronization problems between both servers, and you should execute the drbdsplit command.<br>
+•	<strong>cat /proc/drbd</strong>, the state of your device is kept in /proc/drbd.<br>
+•	<strong>drbdadm role drbd0</strong>, another way to check the role of the block device.<br>
+•	<strong>drbdadm primary drbd0</strong>, switch the DRBD block device to Primary using drbdadm.<br>
+•	<strong>drbdadm secondary drbd0</strong>, switch the DRBD block device to Secondary using drbdadm.<br>
 
 ## More Information
 If you want more information that will help you solve problems about High Availability in VitalPBX we invite you to see the following manual<br>
