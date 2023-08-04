@@ -354,18 +354,7 @@ mkdir /vpbx_data
 ssh root@$ip_standby "mkdir /vpbx_data"
 mkfs.xfs /dev/drbd0
 mount /dev/drbd0 /vpbx_data
-touch /vpbx_data/testfile1
-umount /vpbx_data
-drbdadm secondary drbd0
-sleep 2
-ssh root@$ip_standby "drbdadm primary drbd0 --force"
-ssh root@$ip_standby "mount /dev/drbd0 /vpbx_data"
-ssh root@$ip_standby "touch /vpbx_data/testfile2"
-ssh root@$ip_standby "umount /vpbx_data"
-ssh root@$ip_standby "drbdadm secondary drbd0"
-sleep 2
-drbdadm primary drbd0
-mount /dev/drbd0 /vpbx_data
+sleep 3
 echo -e "*** Done Step 7 ***"
 echo -e "7"	> step.txt
 
