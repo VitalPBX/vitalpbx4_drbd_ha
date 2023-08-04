@@ -166,23 +166,41 @@ root@vitalpbx-<strong>master</strong>:~# wget https://raw.githubusercontent.com/
 root@vitalpbx-<strong>master</strong>:~# chmod +x vpbxha.sh
 root@vitalpbx-<strong>master</strong>:~# ./vpbxha.sh
 </pre>
-  
+
+<pre>
+************************************************************
+*  Welcome to the VitalPBX high availability installation  *
+*                All options are mandatory                 *
+************************************************************
+IP Server1............... > <strong>192.168.10.31</strong>
+IP Server2............... > <strong>192.168.10.32</strong>
+Floating IP.............. > <strong>192.168.10.30</strong>
+Floating IP Mask (SIDR).. > <strong>24</strong>
+Disk (sdax).............. > <strong>sda3</strong>
+hacluster password....... > <strong>MyPassword</strong>
+************************************************************
+*                   Check Information                      *
+*        Make sure you have internet on both servers       *
+************************************************************
+Are you sure to continue with this settings? (yes,no) > <strong>yes</strong>
+</pre>
+
 ## Change Servers Role
 
 To execute the process of changing the role, we recommend using the following command:<br>
 
 <pre>
-[root@vitalpbx-master /]# bascul
+root@vitalpbx-<strong>master</strong>:~# bascul
 ************************************************************
 *     Change the roles of servers in high availability     *
 * <strong>WARNING-WARNING-WARNING-WARNING-WARNING-WARNING-WARNING</strong>  *
 *All calls in progress will be lost and the system will be *
 *     be in an unavailable state for a few seconds.        *
 ************************************************************
-Are you sure to switch from vitalpbx<strong>1</strong>.local to vitalpbx<strong>2</strong>.local? (yes,no) >
+Are you sure to switch from vitalpbx<strong>master</strong>.local to vitalpbx<strong>slave</strong>.local? (yes,no) >
 </pre>
 
-This action convert the vitalpbx<strong>1</strong>.local to Standby and vitalpbx<strong>2</strong>.local to Master. If you want to return to default do the same again.<br>
+This action convert the vitalpbx<strong>master</strong>.local to Standby and vitalpbx<strong>slave</strong>.local to Master. If you want to return to default do the same again.<br>
 
 Next we will show a short video how high availability works in VitalPBX<br>
 <div align="center">
@@ -193,22 +211,22 @@ Next we will show a short video how high availability works in VitalPBX<br>
 ## Recommendations
 If you have to turn off both servers at the same time, we recommend that you start by turning off the one in Standby and then the Master<br>
 If the two servers stopped abruptly, always start first that you think you have the most up-to-date information and a few minutes later the other server<br>
-If you want to update the version of VitalPBX we recommend you do it first on Server 1, then do a bascul and do it again on Server 2<br>
+If you want to update the version of VitalPBX we recommend you do it first on Server Master, then do a bascul and do it again on Server Slave<br>
 
 ## Update VitalPBX version
 
 To update VitalPBX to the latest version just follow the following steps:<br>
-1.- From your browser, go to ip 192.168.10.30<br>
+1.- From your browser, go to ip <strong>192.168.10.30</strong><br>
 2.- Update VitalPBX from the interface<br>
 3.- Execute the following command in Master console<br>
 <pre>
-[root@vitalpbx1 /]# bascul
+root@vitalpbx-<strong>master</strong>:~# bascul
 </pre>
 4.- From your browser, go to ip 192.168.10.30 again<br>
 5.- Update VitalPBX from the interface<br>
 6.- Execute the following command in Master console<br>
 <pre>
-[root@vitalpbx1 /]# bascul
+root@vitalpbx-<strong>master</strong>:~# bascul
 </pre>
 
 ## Some useful commands
