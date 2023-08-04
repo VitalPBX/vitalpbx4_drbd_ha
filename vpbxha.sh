@@ -350,6 +350,8 @@ echo -e "************************************************************"
 echo -e "*              Formating drbd disk in Master               *"
 echo -e "*           Wait, this process may take a while            *"
 echo -e "************************************************************"
+mkdir /vpbx_data
+ssh root@$ip_standby "mkdir /vpbx_data"
 mkfs.xfs /dev/drbd0
 mount /dev/drbd0 /vpbx_data
 touch /vpbx_data/testfile1
