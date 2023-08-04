@@ -213,6 +213,8 @@ echo -e "*             Format new drive in Master/Slave             *"
 echo -e "************************************************************"
 mke2fs -j /dev/$disk
 dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync
+ssh root@$ip_standby "mke2fs -j /dev/$disk"
+ssh root@$ip_standby "dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync"
 echo -e "*** Done Step 2 ***"
 echo -e "2"	> step.txt
 
