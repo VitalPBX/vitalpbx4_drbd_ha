@@ -444,7 +444,7 @@ echo -e "************************************************************"
 echo -e "*         Create filesystem resource in Server 1           *"
 echo -e "************************************************************"
 pcs cluster cib fs_cfg
-pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/mnt/replica" fstype="xfs" 
+pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/mnt" fstype="xfs" 
 pcs -f fs_cfg constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master 
 pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
 pcs -f fs_cfg constraint colocation add DrbdFS with virtual_ip INFINITY
@@ -480,12 +480,12 @@ create_mariadb_service:
 echo -e "************************************************************"
 echo -e "*          Create MariaDB Service in Server 1              *"
 echo -e "************************************************************"
-mkdir /mnt/replica/mysql
-mkdir /mnt/replica/mysql/data
-cp -aR /var/lib/mysql/* /mnt/replica/mysql/data
-chown -R mysql:mysql /mnt/replica/mysql
-sed -i 's/var\/lib\/mysql/mnt\/replica\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
-ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/mnt\/replica\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+mkdir /mnt/mysql
+mkdir /mnt/mysql/data
+cp -aR /var/lib/mysql/* /mnt/mysql/data
+chown -R mysql:mysql /mnt/mysql
+sed -i 's/var\/lib\/mysql/mnt\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/mnt\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 pcs resource create mysql service:mariadb op monitor interval=30s 
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg
@@ -527,24 +527,24 @@ tar -zcvf var-lib-vitalpbx.tgz /var/lib/vitalpbx
 tar -zcvf usr-lib-asterisk.tgz /usr/lib/asterisk
 tar -zcvf var-spool-asterisk.tgz /var/spool/asterisk
 tar -zcvf etc-asterisk.tgz /etc/asterisk
-tar xvfz var-asterisk.tgz -C /mnt/replica
-tar xvfz var-lib-asterisk.tgz -C /mnt/replica
-tar xvfz var-lib-vitalpbx.tgz -C /mnt/replica
-tar xvfz usr-lib-asterisk.tgz -C /mnt/replica
-tar xvfz var-spool-asterisk.tgz -C /mnt/replica
-tar xvfz etc-asterisk.tgz -C /mnt/replica
+tar xvfz var-asterisk.tgz -C /mnt
+tar xvfz var-lib-asterisk.tgz -C /mnt
+tar xvfz var-lib-vitalpbx.tgz -C /mnt
+tar xvfz usr-lib-asterisk.tgz -C /mnt
+tar xvfz var-spool-asterisk.tgz -C /mnt
+tar xvfz etc-asterisk.tgz -C /mnt
 rm -rf /var/log/asterisk 
 rm -rf /var/lib/asterisk
 rm -rf /var/lib/vitalpbx 
 rm -rf /usr/lib/asterisk
 rm -rf /var/spool/asterisk
 rm -rf /etc/asterisk 
-ln -s /mnt/replica/var/log/asterisk /var/log/asterisk 
-ln -s /mnt/replica/var/lib/asterisk /var/lib/asterisk
-ln -s /mnt/replica/var/lib/vitalpbx /var/lib/vitalpbx 
-ln -s /mnt/replica/usr/lib/asterisk /usr/lib/asterisk 
-ln -s /mnt/replica/var/spool/asterisk /var/spool/asterisk 
-ln -s /mnt/replica/etc/asterisk /etc/asterisk
+ln -s /mnt/var/log/asterisk /var/log/asterisk 
+ln -s /mnt/var/lib/asterisk /var/lib/asterisk
+ln -s /mnt/var/lib/vitalpbx /var/lib/vitalpbx 
+ln -s /mnt/usr/lib/asterisk /usr/lib/asterisk 
+ln -s /mnt/var/spool/asterisk /var/spool/asterisk 
+ln -s /mnt/etc/asterisk /etc/asterisk
 rm -rf var-asterisk.tgz
 rm -rf var-lib-asterisk.tgz
 rm -rf var-lib-vitalpbx.tgz
@@ -557,12 +557,12 @@ ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
 ssh root@$ip_standby 'rm -rf /usr/lib/asterisk'
 ssh root@$ip_standby 'rm -rf /var/spool/asterisk'
 ssh root@$ip_standby 'rm -rf /etc/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/replica/var/log/asterisk /var/log/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/replica/var/lib/asterisk /var/lib/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/replica/var/lib/vitalpbx /var/lib/vitalpbx'
-ssh root@$ip_standby 'ln -s /mnt/replica/usr/lib/asterisk /usr/lib/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/replica/var/spool/asterisk /var/spool/asterisk' 
-ssh root@$ip_standby 'ln -s /mnt/replica/etc/asterisk /etc/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/log/asterisk /var/log/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/lib/asterisk /var/lib/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/lib/vitalpbx /var/lib/vitalpbx'
+ssh root@$ip_standby 'ln -s /mnt/usr/lib/asterisk /usr/lib/asterisk'
+ssh root@$ip_standby 'ln -s /mnt/var/spool/asterisk /var/spool/asterisk' 
+ssh root@$ip_standby 'ln -s /mnt/etc/asterisk /etc/asterisk'
 echo -e "*** Done Step 19 ***"
 echo -e "19"	> step.txt
 
