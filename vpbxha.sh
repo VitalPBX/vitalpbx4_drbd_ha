@@ -213,8 +213,8 @@ echo -e "*             Format new drive in Master/Slave             *"
 echo -e "************************************************************"
 mke2fs -j /dev/$disk
 dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync
-ssh root@$ip_slave "mke2fs -j /dev/$disk"
-ssh root@$ip_slave "dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync"
+ssh root@$ip_standby "mke2fs -j /dev/$disk"
+ssh root@$ip_standby "dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync"
 echo -e "*** Done Step 2 ***"
 echo -e "2"	> step.txt
 
@@ -294,9 +294,9 @@ echo -e "************************************************************"
 echo -e "*               Loading drbd in Master/Slave               *"
 echo -e "************************************************************"
 modprobe drbd
-ssh root@$ip_slave "modprobe drbd"
+ssh root@$ip_standby "modprobe drbd"
 systemctl enable drbd.service
-ssh root@$ip_slave "systemctl enable drbd.service"
+ssh root@$ip_standby "systemctl enable drbd.service"
 echo -e "*** Done Step 5 ***"
 echo -e "5"	> step.txt
 
@@ -305,9 +305,9 @@ echo -e "************************************************************"
 echo -e "*       Configure drbr resources in Master/Slave           *"
 echo -e "************************************************************"
 mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
-ssh root@$ip_slave "mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig"
+ssh root@$ip_standby "mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig"
 echo -e "global { \n\tusage-count no; \n} \ncommon { \n\tnet { \n\tprotocol C; \n\t} \n}"  > /etc/drbd.d/global_common.conf
-scp /etc/drbd.d/global_common.conf root@$ip_slave:/etc/drbd.d/global_common.conf
+scp /etc/drbd.d/global_common.conf root@$ip_standby:/etc/drbd.d/global_common.conf
 
 cat > /etc/drbd.d/drbd0.res << EOF
 resource drbd0 {
@@ -318,10 +318,10 @@ on $host_master {
    	address $ip_master:7789;
 	meta-disk internal;
 	}
-on $host_slave {
+on $host_standby {
 	device /dev/drbd0;
    	disk /dev/$disk;
-   	address $ip_slave:7789;
+   	address $ip_standby:7789;
 	meta-disk internal;
    	}
 handlers {
@@ -335,12 +335,12 @@ net {
 }
 EOF
 
-scp /etc/drbd.d/drbd0.res root@$ip_slave:/etc/drbd.d/drbd0.res
+scp /etc/drbd.d/drbd0.res root@$ip_standby:/etc/drbd.d/drbd0.res
 drbdadm create-md drbd0
-ssh root@$ip_slave "drbdadm create-md drbd0"
+ssh root@$ip_standby "drbdadm create-md drbd0"
 drbdadm up drbd0
 drbdadm primary drbd0 --force
-ssh root@$ip_slave "drbdadm up drbd0"
+ssh root@$ip_standby "drbdadm up drbd0"
 sleep 3
 echo -e "*** Done Step 6 ***"
 echo -e "6"	> step.txt
@@ -356,11 +356,11 @@ touch /mnt/testfile1
 umount /mnt
 drbdadm secondary drbd0
 sleep 2
-ssh root@$ip_slave "drbdadm primary drbd0 --force"
-ssh root@$ip_slave "mount /dev/drbd0 /mnt"
-ssh root@$ip_slave "touch /mnt/testfile2"
-ssh root@$ip_slave "umount /mnt"
-ssh root@$ip_slave "drbdadm secondary drbd0"
+ssh root@$ip_standby "drbdadm primary drbd0 --force"
+ssh root@$ip_standby "mount /dev/drbd0 /mnt"
+ssh root@$ip_standby "touch /mnt/testfile2"
+ssh root@$ip_standby "umount /mnt"
+ssh root@$ip_standby "drbdadm secondary drbd0"
 sleep 2
 drbdadm primary drbd0
 mount /dev/drbd0 /mnt
