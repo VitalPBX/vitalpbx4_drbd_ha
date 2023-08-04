@@ -392,10 +392,10 @@ sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/syst
 sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
 pcs resource create asterisk service:asterisk op monitor interval=30s
 pcs cluster cib fs_cfg
-pcs cluster cib-push fs_cfg --config
+pcs cluster cib-push fs_cfg
 pcs -f fs_cfg constraint colocation add asterisk with virtual_ip INFINITY
 pcs -f fs_cfg constraint order mysql then asterisk
-pcs cluster cib-push fs_cfg --config
+pcs cluster cib-push fs_cfg
 #Changing these values from 15s (default) to 120s is very important 
 #since depending on the server and the number of extensions 
 #the Asterisk can take more than 15s to start
