@@ -125,94 +125,6 @@ Then, restart the servers so that the new table is available.
 root@vitalpbx-<strong>master-slave</strong>:~# reboot
 </pre>
 
-## Format the partition 
-Now, we will proceed to format the new partition in both servers with the following command: 
-<pre>
-root@vitalpbx-<strong>master-slave</strong>:~# mke2fs -j /dev/sda3
-root@vitalpbx-<strong>master-slave</strong>:~# dd if=/dev/zero bs=1M count=500 of=/dev/sda3; sync
-</pre>
-
-## Configuring DRBD
-Load the module and enable the service on both nodes, using the follow command:
-<pre>
-root@vitalpbx-<strong>master-slave</strong>:~# modprobe drbd
-root@vitalpbx-<strong>master-slave</strong>:~# systemctl enable drbd.service
-</pre>
-
-Create a new global_common.conf file on both nodes with the following contents:
-<pre>
-root@vitalpbx-<strong>master-slave</strong>:~# mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
-root@vitalpbx-<strong>master-slave</strong>:~# nano /etc/drbd.d/global_common.conf
-global {
-  usage-count yes;
-}
-  common {
-net {
-  protocol C;
-  }
-}
-</pre>
-
-Next, we will need to create a new configuration file called /etc/drbd.d/drbd0.res for the new resource named drbd0, with the following contents:
-<pre>
-root@vitalpbx-<strong>master-slave</strong>:~# nano /etc/drbd.d/drbd0.res
-resource drbd0 {
-     on vitalpbx-master.local {
-          device /dev/drbd0;
-          disk /dev/sda3;
-          address <strong>192.168.10.31</strong>:7789;
-          meta-disk internal;
-     }
-     on vitalpbx-slave.local {
-          device /dev/drbd0;
-          disk /dev/sda3;
-          address <strong>192.168.10.32</strong>:7789;
-          meta-disk internal;
-     }
-handlers {
-     split-brain "/usr/lib/drbd/notify-split-brain.sh root";
-     }
-net  {
-     after-sb-0pri discard-zero-changes;
-     after-sb-1pri discard-secondary;
-     after-sb-2pri disconnect;
-     }
-}
-</pre>
-
-Initialize the meta data storage on each nodes by executing the following command on both nodes
-<pre>
-root@vitalpbx-<strong>master-slave</strong>:~# drbdadm create-md drbd0
-Writing meta data...
-New drbd meta data block successfully created.
-</pre>
-
-Let’s define the DRBD Primary node as first node “vitalpbx-master”
-<pre>
-root@vitalpbx-<strong>master</strong>:~# drbdadm up drbd0
-root@vitalpbx-<strong>master</strong>:~# drbdadm primary drbd0 --force
-</pre>
-
-On the Secondary node “vitalpbx-slave” run the following command to start the drbd0
-<pre>
-root@vitalpbx-<strong>slave</strong>:~#  drbdadm up drbd0
-</pre>
-
-You can check the current status of the synchronization while it’s being performed. The cat /proc/drbd command displays the creation and synchronization progress of the resource.
-<pre>
-root@vitalpbx-<strong>master-slave</strong>:~#  cat /proc/drbd 
-</pre>
-
-## Formatting DRBD Disk
-In order to test the DRBD functionality we need to Create a file system, mount the volume and write some data on primary node “vitalpbx-master” and finally switch the primary node to “vitalpbx-slave”
-
-Run the following command on the primary node to create an xfs filesystem on /dev/drbd0 and mount it to the mnt directory, using the following commands
-<pre>
-root@vitalpbx-<strong>master</strong>:~# mkfs.xfs /dev/drbd0
-root@vitalpbx-<strong>master</strong>:~# mkdir /mnt/replica
-root@vitalpbx-<strong>master</strong>:~# mount /dev/drbd0 /mnt/replica
-</pre>
-
 ## Create authorization key for the Access between the two servers without credentials
 
 Create key in Server <strong>Master</strong>
@@ -305,6 +217,13 @@ To update VitalPBX to the latest version just follow the following steps:<br>
 • <strong>drbdsplit</strong>, solves DRBD split brain recovery.<br>
 • <strong>pcs resource refresh --full</strong>, to poll all resources even if the status is unknown, enter the following command.<br>
 • <strong>pcs cluster unstandby host</strong>, in some cases the bascul command does not finish tilting, which causes one of the servers to be in standby (stop), with this command the state is restored to normal.<br>
+•	<strong>pcs resource delete</strong>, removes the resource so it can be created.
+•	<strong>pcs resource create</strong>, create the resource.
+•	<strong>drbdadm status</strong>, shows the integrity status of the disks that are being shared between both servers in high availability. If for some reason the status of Connecting or Standalone returns to us, wait a while and if the state remains it is because there are synchronization problems between both servers, and you should execute the drbdsplit command.
+•	<strong>cat /proc/drbd</strong>, the state of your device is kept in /proc/drbd.
+•	<strong>drbdadm role drbd0</strong>, another way to check the role of the block device.
+•	<strong>drbdadm primary drbd0</strong>, switch the DRBD block device to Primary using drbdadm.
+•	<strong>drbdadm secondary drbd0</strong>, switch the DRBD block device to Secondary using drbdadm.
 
 ## More Information
 If you want more information that will help you solve problems about High Availability in VitalPBX we invite you to see the following manual<br>
