@@ -351,19 +351,19 @@ echo -e "*              Formating drbd disk in Master               *"
 echo -e "*           Wait, this process may take a while            *"
 echo -e "************************************************************"
 mkfs.xfs /dev/drbd0
-mount /dev/drbd0 /mnt
-touch /mnt/testfile1
-umount /mnt
+mount /dev/drbd0 /vpbx_data
+touch /vpbx_data/testfile1
+umount /vpbx_data
 drbdadm secondary drbd0
 sleep 2
 ssh root@$ip_standby "drbdadm primary drbd0 --force"
-ssh root@$ip_standby "mount /dev/drbd0 /mnt"
-ssh root@$ip_standby "touch /mnt/testfile2"
-ssh root@$ip_standby "umount /mnt"
+ssh root@$ip_standby "mount /dev/drbd0 /vpbx_data"
+ssh root@$ip_standby "touch /vpbx_data/testfile2"
+ssh root@$ip_standby "umount /vpbx_data"
 ssh root@$ip_standby "drbdadm secondary drbd0"
 sleep 2
 drbdadm primary drbd0
-mount /dev/drbd0 /mnt
+mount /dev/drbd0 /vpbx_data
 echo -e "*** Done Step 7 ***"
 echo -e "7"	> step.txt
 
@@ -444,7 +444,7 @@ echo -e "************************************************************"
 echo -e "*         Create filesystem resource in Server 1           *"
 echo -e "************************************************************"
 pcs cluster cib fs_cfg
-pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/mnt" fstype="xfs" 
+pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/vpbx_data" fstype="xfs" 
 pcs -f fs_cfg constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master 
 pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
 pcs -f fs_cfg constraint colocation add DrbdFS with virtual_ip INFINITY
@@ -480,12 +480,12 @@ create_mariadb_service:
 echo -e "************************************************************"
 echo -e "*          Create MariaDB Service in Server 1              *"
 echo -e "************************************************************"
-mkdir /mnt/mysql
-mkdir /mnt/mysql/data
-cp -aR /var/lib/mysql/* /mnt/mysql/data
-chown -R mysql:mysql /mnt/mysql
-sed -i 's/var\/lib\/mysql/mnt\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
-ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/mnt\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+mkdir /vpbx_data/mysql
+mkdir /vpbx_data/mysql/data
+cp -aR /var/lib/mysql/* /vpbx_data/mysql/data
+chown -R mysql:mysql /vpbx_data/mysql
+sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 pcs resource create mysql service:mariadb op monitor interval=30s 
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg
@@ -527,24 +527,24 @@ tar -zcvf var-lib-vitalpbx.tgz /var/lib/vitalpbx
 tar -zcvf usr-lib-asterisk.tgz /usr/lib/asterisk
 tar -zcvf var-spool-asterisk.tgz /var/spool/asterisk
 tar -zcvf etc-asterisk.tgz /etc/asterisk
-tar xvfz var-asterisk.tgz -C /mnt
-tar xvfz var-lib-asterisk.tgz -C /mnt
-tar xvfz var-lib-vitalpbx.tgz -C /mnt
-tar xvfz usr-lib-asterisk.tgz -C /mnt
-tar xvfz var-spool-asterisk.tgz -C /mnt
-tar xvfz etc-asterisk.tgz -C /mnt
+tar xvfz var-asterisk.tgz -C /vpbx_data
+tar xvfz var-lib-asterisk.tgz -C /vpbx_data
+tar xvfz var-lib-vitalpbx.tgz -C /vpbx_data
+tar xvfz usr-lib-asterisk.tgz -C /vpbx_data
+tar xvfz var-spool-asterisk.tgz -C /vpbx_data
+tar xvfz etc-asterisk.tgz -C /vpbx_data
 rm -rf /var/log/asterisk 
 rm -rf /var/lib/asterisk
 rm -rf /var/lib/vitalpbx 
 rm -rf /usr/lib/asterisk
 rm -rf /var/spool/asterisk
 rm -rf /etc/asterisk 
-ln -s /mnt/var/log/asterisk /var/log/asterisk 
-ln -s /mnt/var/lib/asterisk /var/lib/asterisk
-ln -s /mnt/var/lib/vitalpbx /var/lib/vitalpbx 
-ln -s /mnt/usr/lib/asterisk /usr/lib/asterisk 
-ln -s /mnt/var/spool/asterisk /var/spool/asterisk 
-ln -s /mnt/etc/asterisk /etc/asterisk
+ln -s /vpbx_data/var/log/asterisk /var/log/asterisk 
+ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk
+ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx 
+ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk 
+ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk 
+ln -s /vpbx_data/etc/asterisk /etc/asterisk
 rm -rf var-asterisk.tgz
 rm -rf var-lib-asterisk.tgz
 rm -rf var-lib-vitalpbx.tgz
@@ -557,12 +557,12 @@ ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
 ssh root@$ip_standby 'rm -rf /usr/lib/asterisk'
 ssh root@$ip_standby 'rm -rf /var/spool/asterisk'
 ssh root@$ip_standby 'rm -rf /etc/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/var/log/asterisk /var/log/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/var/lib/asterisk /var/lib/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/var/lib/vitalpbx /var/lib/vitalpbx'
-ssh root@$ip_standby 'ln -s /mnt/usr/lib/asterisk /usr/lib/asterisk'
-ssh root@$ip_standby 'ln -s /mnt/var/spool/asterisk /var/spool/asterisk' 
-ssh root@$ip_standby 'ln -s /mnt/etc/asterisk /etc/asterisk'
+ssh root@$ip_standby 'ln -s /vpbx_data/var/log/asterisk /var/log/asterisk'
+ssh root@$ip_standby 'ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk'
+ssh root@$ip_standby 'ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx'
+ssh root@$ip_standby 'ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk'
+ssh root@$ip_standby 'ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk' 
+ssh root@$ip_standby 'ln -s /vpbx_data/etc/asterisk /etc/asterisk'
 echo -e "*** Done Step 19 ***"
 echo -e "19"	> step.txt
 
