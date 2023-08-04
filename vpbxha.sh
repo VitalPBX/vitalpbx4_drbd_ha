@@ -472,10 +472,10 @@ echo -e "************************************************************"
 echo -e "*                 Create fail2ban Service                  *"
 echo -e "************************************************************"
 pcs resource create fail2ban service:fail2ban op monitor interval=30s
-pcs cluster cib fs_cfg 
-pcs cluster cib-push fs_cfg 
-pcs -f fs_cfg constraint colocation add fail2ban with virtual_ip INFINITY 
-pcs -f fs_cfg constraint order asterisk then fail2ban 
+pcs cluster cib fs_cfg
+pcs cluster cib-push fs_cfg
+pcs -f fs_cfg constraint colocation add fail2ban with virtual_ip INFINITY
+pcs -f fs_cfg constraint order asterisk then fail2ban
 pcs cluster cib-push fs_cfg
 echo -e "*** Done Step 17 ***"
 echo -e "17"	> step.txt
