@@ -310,7 +310,7 @@ mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
 ssh root@$ip_standby "mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig"
 cat > /etc/drbd.d/global_common.conf << EOF
 global {
-  	usage-count yes;
+  	usage-count no;
 }
 common {
 	net {
@@ -334,14 +334,6 @@ on $host_standby {
    	address $ip_standby:7789;
 	meta-disk internal;
    	}
-handlers {
-    split-brain "/usr/lib/drbd/notify-split-brain.sh root";
-    }
-net {
-    after-sb-0pri discard-zero-changes;
-    after-sb-1pri discard-secondary;
-    after-sb-2pri disconnect;
-    }
 }
 EOF
 
@@ -436,7 +428,8 @@ echo -e "************************************************************"
 pcs cluster cib drbd_cfg
 pcs -f drbd_cfg resource create DrbdData ocf:linbit:drbd drbd_resource=drbd0 op monitor interval=60s
 pcs -f drbd_cfg resource promotable DrbdData promoted-max=1 promoted-node-max=1 clone-max=2 clone-node-max=1 notify=true
-pcs cluster cib-push drbd_cfg --config 
+pcs cluster cib fs_cfg
+pcs cluster cib-push drbd_cfg --config
 echo -e "*** Done Step 14 ***"
 echo -e "14"	> step.txt
 
@@ -444,13 +437,13 @@ create_filesystem_resource:
 echo -e "************************************************************"
 echo -e "*         Create filesystem resource in Server 1           *"
 echo -e "************************************************************"
-pcs cluster cib fs_cfg 
-pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/vpbx_data" fstype="xfs" 
-pcs -f fs_cfg constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master 
+pcs cluster cib fs_cfg
+pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/vpbx_data" fstype="xfs"
+pcs -f fs_cfg constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master
 pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
 pcs -f fs_cfg constraint colocation add DrbdFS with ClusterIP INFINITY
 pcs -f fs_cfg constraint order ClusterIP then DrbdFS
-pcs cluster cib-push fs_cfg --config 
+pcs cluster cib-push fs_cfg --config
 echo -e "*** Done Step 15 ***"
 echo -e "15"	> step.txt
 
