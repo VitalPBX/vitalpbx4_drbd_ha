@@ -162,53 +162,6 @@ echo -e "*****************************************************************"
 		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA21064'"
 		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA9929'"
   		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'DRBD7789'"
-		echo -e "************************************************************"
-		echo -e "*                 Normalize MariaDB                        *"
-		echo -e "************************************************************"
-		cp -aR /vpbx_data/mysql/data* /var/lib/mysql/
-		sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf
-		ssh root@$ip_standby "sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
-		scp -r /var/lib/mysql/ root@$ip_standby:/var/lib/mysql/
-		echo -e "************************************************************"
-		echo -e "*                  Normalize Asterisk                      *"
-		echo -e "************************************************************"
-		cd /vpbx_data
-		tar -zcvf var-asterisk.tgz var/log/asterisk 
-		tar -zcvf var-lib-asterisk.tgz var/lib/asterisk
-		tar -zcvf var-lib-vitalpbx.tgz var/lib/vitalpbx
-		tar -zcvf usr-lib-asterisk.tgz usr/lib/asterisk
-		tar -zcvf var-spool-asterisk.tgz var/spool/asterisk
-		tar -zcvf etc-asterisk.tgz etc/asterisk
-		rm -rf /var/log/asterisk 
-		rm -rf /var/lib/asterisk
-		rm -rf /var/lib/vitalpbx 
-		rm -rf /usr/lib/asterisk 
-		rm -rf /var/spool/asterisk 
-		rm -rf /etc/asterisk
-		tar xvfz var-asterisk.tgz -C /
-		tar xvfz var-lib-asterisk.tgz -C /
-		tar xvfz var-lib-vitalpbx.tgz -C /
-		tar xvfz usr-lib-asterisk.tgz -C /
-		tar xvfz var-spool-asterisk.tgz -C /
-		tar xvfz etc-asterisk.tgz -C /
-		rm -rf var-asterisk.tgz
-		rm -rf var-lib-asterisk.tgz
-		rm -rf var-lib-vitalpbx.tgz
-		rm -rf usr-lib-asterisk.tgz
-		rm -rf var-spool-asterisk.tgz
-		rm -rf etc-asterisk.tgz
-		ssh root@$ip_standby 'rm -rf /var/log/asterisk'
-		ssh root@$ip_standby 'rm -rf /var/lib/asterisk'
-		ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
-		ssh root@$ip_standby 'rm -rf /usr/lib/asterisk'
-		ssh root@$ip_standby 'rm -rf /var/spool/asterisk'
-		ssh root@$ip_standby 'rm -rf /etc/asterisk'
- 		scp -r /var/log/asterisk/ root@$ip_standby:/var/log/asterisk/
-   		scp -r /var/lib/asterisk/ root@$ip_standby:/var/lib/asterisk/
-   		scp -r /var/lib/vitalpbx/ root@$ip_standby:/var/lib/vitalpbx/
-   		scp -r /usr/lib/asterisk/ root@$ip_standby:/usr/lib/asterisk/
-   		scp -r /var/spool/asterisk/ root@$ip_standby:/var/spool/asterisk/
-   		scp -r /etc/asterisk/ root@$ip_standby:/etc/asterisk/
   		echo -e "************************************************************"
 		echo -e "*                   Destroy Cluster                        *"
 		echo -e "************************************************************"  
@@ -220,6 +173,69 @@ echo -e "*****************************************************************"
 		systemctl stop pcsd.service 
 		systemctl stop corosync.service 
 		systemctl stop pacemaker.service
+  		ssh root@$ip_standby "pcs cluster stop"
+    		ssh root@$ip_standby "pcs cluster destroy"
+    		ssh root@$ip_standby "systemctl disable pcsd.service"
+    		ssh root@$ip_standby "systemctl disable corosync.service"
+    		ssh root@$ip_standby "systemctl disable pacemaker.service"
+    		ssh root@$ip_standby "systemctl stop pcsd.service"
+    		ssh root@$ip_standby "systemctl stop corosync.service"
+    		ssh root@$ip_standby "systemctl stop pacemaker.service"
+  		echo -e "************************************************************"
+		echo -e "*                 Normalize MariaDB in Master              *"
+		echo -e "************************************************************"
+  		systemctl stop mariadb
+		sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+  		drbdadm up drbd0
+    		drbdadm primary drbd0 --force
+      		mount /dev/drbd0 /vpbx_data
+		cp -aR /vpbx_data/mysql/data* /var/lib/mysql/
+		echo -e "************************************************************"
+		echo -e "*                Normalize Asterisk in Master              *"
+		echo -e "************************************************************"
+		cd /vpbx_data
+		rm -rf /var/log/asterisk 
+		rm -rf /var/lib/asterisk
+		rm -rf /var/lib/vitalpbx 
+		rm -rf /usr/lib/asterisk 
+		rm -rf /var/spool/asterisk 
+		rm -rf /etc/asterisk
+		cp -aR /vpbx_data/var/log/asterisk /var/log/asterisk
+		cp -aR /vpbx_data/var/lib/asterisk /var/lib/asterisk
+		cp -aR /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx
+		cp -aR /vpbx_data/usr/lib/asterisk /usr/lib/asterisk
+		cp -aR /vpbx_data/var/spool/asterisk /var/spool/asterisk
+		cp -aR /vpbx_data/etc/asterisk /etc/asterisk
+    		echo -e "************************************************************"
+		echo -e "*         Switch to DRBD Disk from Master to Slave         *"
+		echo -e "************************************************************"
+		cd /		
+  		umount /vpbx_data
+		drbdadm secondary drbd0
+  		ssh root@$ip_standby "drbdadm up drbd0"
+		ssh root@$ip_standby "drbdadm primary drbd0 --force"
+  		ssh root@$ip_standby "mount /dev/drbd0 /vpbx_data"
+  		echo -e "************************************************************"
+		echo -e "*                 Normalize MariaDB in Slave              *"
+		echo -e "************************************************************"
+    		ssh root@$ip_standby "systemctl stop mariadb"
+		ssh root@$ip_standby "sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+		ssh root@$ip_standby "cp -aR /vpbx_data/mysql/data* /var/lib/mysql/"
+		echo -e "************************************************************"
+		echo -e "*                Normalize Asterisk in Slave              *"
+		echo -e "************************************************************"
+		ssh root@$ip_standby "rm -rf /var/log/asterisk"
+		ssh root@$ip_standby "rm -rf /var/lib/asterisk"
+		ssh root@$ip_standby "rm -rf /var/lib/vitalpbx"
+		ssh root@$ip_standby "rm -rf /usr/lib/asterisk"
+		ssh root@$ip_standby "rm -rf /var/spool/asterisk" 
+		ssh root@$ip_standby "rm -rf /etc/asterisk"
+		ssh root@$ip_standby "cp -aR /vpbx_data/var/log/asterisk /var/log/asterisk"
+		ssh root@$ip_standby "cp -aR /vpbx_data/var/lib/asterisk /var/lib/asterisk"
+		ssh root@$ip_standby "cp -aR /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx"
+		ssh root@$ip_standby "cp -aR /vpbx_data/usr/lib/asterisk /usr/lib/asterisk"
+		ssh root@$ip_standby "cp -aR /vpbx_data/var/spool/asterisk /var/spool/asterisk"
+		ssh root@$ip_standby "cp -aR /vpbx_data/etc/asterisk /etc/asterisk"
 		echo -e "************************************************************"
 		echo -e "*            Creating Welcome message original             *"
 		echo -e "************************************************************"
@@ -239,11 +255,9 @@ echo -e "*****************************************************************"
 		echo -e "*  Remove memory Firewall Rules in Server 1 and 2 and App  *"
 		echo -e "************************************************************"
 		firewall-cmd --remove-service=high-availability
-		firewall-cmd --zone=public --remove-port=3306/tcp
 		firewall-cmd --runtime-to-permanent
 		firewall-cmd --reload
 		ssh root@$ip_standby "firewall-cmd --remove-service=high-availability"
-		ssh root@$ip_standby "firewall-cmd --zone=public --remove-port=3306/tcp"
 		ssh root@$ip_standby "firewall-cmd --runtime-to-permanent"
 		ssh root@$ip_standby "firewall-cmd --reload"
 		echo -e "************************************************************"
@@ -254,9 +268,9 @@ echo -e "*****************************************************************"
     		systemctl enable mariadb
     		systemctl restart mariadb
     		systemctl enable fail2ban
-      		systemctl enable vpbx-monitor
 		systemctl restart fail2ban
-		systemctl restart vpbx-monitor
+      		systemctl enable vpbx-monitor
+	  	systemctl restart vpbx-monitor
   		ssh root@$ip_standby "systemctl enable asterisk"
       		ssh root@$ip_standby "systemctl restart asterisk"
   		ssh root@$ip_standby "systemctl enable mariadb"
@@ -270,6 +284,7 @@ echo -e "*****************************************************************"
 		echo -e "************************************************************"  
     		drbdsetup detach /dev/drbd0
 		drbdsetup del-minor /dev/drbd0
+  		ssh root@$ip_standby "systemctl stop drbd"
 		ssh root@$ip_standby "drbdsetup detach /dev/drbd0"
 		ssh root@$ip_standby "drbdsetup del-minor /dev/drbd0"
 		rm -rf /etc/drbd.d/global_common.conf
@@ -689,18 +704,12 @@ copy_asterisk_files:
 echo -e "************************************************************"
 echo -e "*            Copy Asterisk File in DRBD Disk               *"
 echo -e "************************************************************"
-tar -zcvf var-asterisk.tgz /var/log/asterisk 
-tar -zcvf var-lib-asterisk.tgz /var/lib/asterisk
-tar -zcvf var-lib-vitalpbx.tgz /var/lib/vitalpbx
-tar -zcvf usr-lib-asterisk.tgz /usr/lib/asterisk
-tar -zcvf var-spool-asterisk.tgz /var/spool/asterisk
-tar -zcvf etc-asterisk.tgz /etc/asterisk
-tar xvfz var-asterisk.tgz -C /vpbx_data
-tar xvfz var-lib-asterisk.tgz -C /vpbx_data
-tar xvfz var-lib-vitalpbx.tgz -C /vpbx_data
-tar xvfz usr-lib-asterisk.tgz -C /vpbx_data
-tar xvfz var-spool-asterisk.tgz -C /vpbx_data
-tar xvfz etc-asterisk.tgz -C /vpbx_data
+cp -aR /var/log/asterisk /vpbx_data/var/log/asterisk
+cp -aR /var/lib/asterisk /vpbx_data/var/lib/asterisk
+cp -aR /var/lib/vitalpbx /vpbx_data/var/lib/vitalpbx
+cp -aR /usr/lib/asterisk /vpbx_data/usr/lib/asterisk
+cp -aR /var/spool/asterisk /vpbx_data/var/spool/asterisk
+cp -aR /etc/asterisk /vpbx_data/etc/asterisk
 rm -rf /var/log/asterisk 
 rm -rf /var/lib/asterisk
 rm -rf /var/lib/vitalpbx 
@@ -713,12 +722,6 @@ ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx
 ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk 
 ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk 
 ln -s /vpbx_data/etc/asterisk /etc/asterisk
-rm -rf var-asterisk.tgz
-rm -rf var-lib-asterisk.tgz
-rm -rf var-lib-vitalpbx.tgz
-rm -rf usr-lib-asterisk.tgz
-rm -rf var-spool-asterisk.tgz
-rm -rf etc-asterisk.tgz
 ssh root@$ip_standby 'rm -rf /var/log/asterisk'
 ssh root@$ip_standby 'rm -rf /var/lib/asterisk'
 ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
