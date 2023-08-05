@@ -119,6 +119,40 @@ echo -e "$host_master"
 echo -e "$host_standby"
 echo -e "*** Done ***"
 
+arg=$1
+if [ "$arg" = 'destroy' ] ;then
+# Print a warning message destroy cluster message
+echo -e "*****************************************************************"
+echo -e "*  \e[41m WARNING-WARNING-WARNING-WARNING-WARNING-WARNING-WARNING  \e[0m   *"
+echo -e "*  This process completely destroys the cluster on both servers *"
+echo -e "*          then you can re-create it with the command           *"
+echo -e "*                     ./vpbxha.sh rebuild                       *"
+echo -e "*****************************************************************"
+	while [[ $veryfy_destroy != yes && $veryfy_destroy != no ]]
+	do
+	read -p "Are you sure you want to completely destroy the cluster? (yes, no) > " veryfy_destroy 
+	done
+	if [ "$veryfy_destroy" = yes ] ;then
+		pcs cluster stop
+		pcs cluster destroy
+		systemctl disable pcsd.service 
+		systemctl disable corosync.service 
+		systemctl disable pacemaker.service
+		systemctl stop pcsd.service 
+		systemctl stop corosync.service 
+		systemctl stop pacemaker.service
+		echo -e "************************************************************"
+		echo -e "*            Creating Welcome message original             *"
+		echo -e "************************************************************"
+		wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/welcome
+    		yes | cp -fr welcome /etc/update-motd.d/20-vitalpbx
+		chmod 755 /etc/update-motd.d/20-vitalpbx
+		echo -e "*** Done ***"
+		scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
+		ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
+  
+	fi
+
 stepFile=step.txt
 if [ -f $stepFile ]; then
 	step=`cat $stepFile`
