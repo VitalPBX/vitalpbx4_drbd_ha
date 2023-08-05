@@ -237,6 +237,10 @@ root@vitalpbx-<strong>master</strong>:~# bascul
 • <strong>pcs cluster unstandby host</strong>, in some cases the bascul command does not finish tilting, which causes one of the servers to be in standby (stop), with this command the state is restored to normal.<br>
 •	<strong>pcs resource delete</strong>, removes the resource so it can be created.<br>
 •	<strong>pcs resource create</strong>, create the resource.<br>
+•	<strong>corosync-cfgtool -s</strong>, to check whether cluster communication is happy.
+•	<strong>ps axf</strong>, confirmed that Corosync is functional, we can check the rest of the stack. Pacemaker has already been started, so verify the necessary processes are running.
+•	<strong>pcs status</strong>, check the pcs status output.
+•	<strong>crm_verify -L -V</strong>, check the validity of the configuration.
 •	<strong>drbdadm status</strong>, shows the integrity status of the disks that are being shared between both servers in high availability. If for some reason the status of Connecting or Standalone returns to us, wait a while and if the state remains it is because there are synchronization problems between both servers, and you should execute the drbdsplit command.<br>
 •	<strong>cat /proc/drbd</strong>, the state of your device is kept in /proc/drbd.<br>
 •	<strong>drbdadm role drbd0</strong>, another way to check the role of the block device.<br>
