@@ -211,6 +211,8 @@ format_partition:
 echo -e "************************************************************"
 echo -e "*             Format new drive in Master/Slave             *"
 echo -e "************************************************************"
+mkdir /vpbx_data
+ssh root@$ip_standby "mkdir /vpbx_data"
 mke2fs -j /dev/$disk
 dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync
 ssh root@$ip_standby "mke2fs -j /dev/$disk"
@@ -306,7 +308,16 @@ echo -e "*       Configure drbr resources in Master/Slave           *"
 echo -e "************************************************************"
 mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
 ssh root@$ip_standby "mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig"
-echo -e "global { \n\tusage-count no; \n} \ncommon { \n\tnet { \n\tprotocol C; \n\t} \n}"  > /etc/drbd.d/global_common.conf
+cat > /etc/drbd.d/global_common.conf << EOF
+global {
+  	usage-count yes;
+}
+common {
+	net {
+  		protocol C;
+  	}
+}
+EOF
 scp /etc/drbd.d/global_common.conf root@$ip_standby:/etc/drbd.d/global_common.conf
 
 cat > /etc/drbd.d/drbd0.res << EOF
@@ -350,8 +361,6 @@ echo -e "************************************************************"
 echo -e "*              Formating drbd disk in Master               *"
 echo -e "*           Wait, this process may take a while            *"
 echo -e "************************************************************"
-mkdir /vpbx_data
-ssh root@$ip_standby "mkdir /vpbx_data"
 mkfs.xfs /dev/drbd0
 mount /dev/drbd0 /vpbx_data
 sleep 3
@@ -414,8 +423,9 @@ creating_floating_ip:
 echo -e "************************************************************"
 echo -e "*            Creating Floating IP in Master                *"
 echo -e "************************************************************"
-pcs resource create virtual_ip ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask=$ip_floating_mask op monitor interval=30s on-fail=restart
+pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask=$ip_floating_mask op monitor interval=30s on-fail=restart
 pcs cluster cib drbd_cfg
+sleep 2
 pcs cluster cib-push drbd_cfg
 echo -e "*** Done Step 13 ***"
 echo -e "13"	> step.txt
@@ -426,6 +436,7 @@ echo -e "*             Create drbd resource in Server 1             *"
 echo -e "************************************************************"
 pcs -f drbd_cfg resource create DrbdData ocf:linbit:drbd drbd_resource=drbd0 op monitor interval=60s
 pcs -f drbd_cfg resource promotable DrbdData promoted-max=1 promoted-node-max=1 clone-max=2 clone-node-max=1 notify=true
+sleep 2
 pcs cluster cib-push drbd_cfg 
 echo -e "*** Done Step 14 ***"
 echo -e "14"	> step.txt
@@ -438,8 +449,9 @@ pcs cluster cib fs_cfg
 pcs -f fs_cfg resource create DrbdFS Filesystem device="/dev/drbd0" directory="/vpbx_data" fstype="xfs" 
 pcs -f fs_cfg constraint colocation add DrbdFS with DrbdData-clone INFINITY with-rsc-role=Master 
 pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
-pcs -f fs_cfg constraint colocation add DrbdFS with virtual_ip INFINITY
-pcs -f fs_cfg constraint order virtual_ip then DrbdFS
+pcs -f fs_cfg constraint colocation add DrbdFS with ClusterIP INFINITY
+pcs -f fs_cfg constraint order ClusterIP then DrbdFS
+sleep 2
 pcs cluster cib-push fs_cfg 
 echo -e "*** Done Step 15 ***"
 echo -e "15"	> step.txt
@@ -479,9 +491,11 @@ sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50
 ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 pcs resource create mysql service:mariadb op monitor interval=30s 
 pcs cluster cib fs_cfg
+sleep 2
 pcs cluster cib-push fs_cfg
-pcs -f fs_cfg constraint colocation add mysql with virtual_ip INFINITY
+pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
 pcs -f fs_cfg constraint order DrbdFS then mysql
+sleep 2
 pcs cluster cib-push fs_cfg
 echo -e "*** Done Step 17 ***"
 echo -e "17"	> step.txt
@@ -495,9 +509,11 @@ sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/syst
 sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
 pcs resource create asterisk service:asterisk op monitor interval=30s
 pcs cluster cib fs_cfg
+sleep 2
 pcs cluster cib-push fs_cfg
-pcs -f fs_cfg constraint colocation add asterisk with virtual_ip INFINITY
+pcs -f fs_cfg constraint colocation add asterisk with ClusterIP INFINITY
 pcs -f fs_cfg constraint order mysql then asterisk
+sleep 2
 pcs cluster cib-push fs_cfg
 #Changing these values from 15s (default) to 120s is very important 
 #since depending on the server and the number of extensions 
@@ -562,11 +578,13 @@ echo -e "************************************************************"
 echo -e "*                 Create VitalPBX Service                  *"
 echo -e "************************************************************"
 pcs resource create vpbx-monitor service:vpbx-monitor op monitor interval=30s
-pcs cluster cib fs_cfg 
+pcs cluster cib fs_cfg
+sleep 2
 pcs cluster cib-push fs_cfg 
-pcs -f fs_cfg constraint colocation add vpbx-monitor with virtual_ip INFINITY 
-pcs -f fs_cfg constraint order asterisk then vpbx-monitor 
-pcs cluster cib-push fs_cfg 
+pcs -f fs_cfg constraint colocation add vpbx-monitor with ClusterIP INFINITY
+pcs -f fs_cfg constraint order asterisk then vpbx-monitor
+sleep 2
+pcs cluster cib-push fs_cfg
 echo -e "*** Done Step 20 ***"
 echo -e "20"	> step.txt
 
@@ -576,9 +594,11 @@ echo -e "*                 Create fail2ban Service                  *"
 echo -e "************************************************************"
 pcs resource create fail2ban service:fail2ban op monitor interval=30s
 pcs cluster cib fs_cfg
+sleep 2
 pcs cluster cib-push fs_cfg --config
-pcs -f fs_cfg constraint colocation add fail2ban with virtual_ip INFINITY
+pcs -f fs_cfg constraint colocation add fail2ban with ClusterIP INFINITY
 pcs -f fs_cfg constraint order asterisk then fail2ban
+sleep 2
 pcs cluster cib-push fs_cfg --config
 echo -e "*** Done Step 21 ***"
 echo -e "21"	> step.txt
