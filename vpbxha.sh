@@ -490,13 +490,11 @@ chown -R mysql:mysql /vpbx_data/mysql
 sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
 ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 pcs resource create mysql service:mariadb op monitor interval=30s 
-pcs cluster cib fs_cfg
-sleep 2
-pcs cluster cib-push fs_cfg
+pcs cluster cib fs_cfg --config 
+pcs cluster cib-push fs_cfg --config 
 pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
 pcs -f fs_cfg constraint order DrbdFS then mysql
-sleep 2
-pcs cluster cib-push fs_cfg
+pcs cluster cib-push fs_cfg --config 
 echo -e "*** Done Step 17 ***"
 echo -e "17"	> step.txt
 
@@ -508,13 +506,11 @@ sed -i 's/RestartSec=10/RestartSec=1/g'  /usr/lib/systemd/system/asterisk.servic
 sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
 sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
 pcs resource create asterisk service:asterisk op monitor interval=30s
-pcs cluster cib fs_cfg
-sleep 2
-pcs cluster cib-push fs_cfg
+pcs cluster cib fs_cfg --config 
+pcs cluster cib-push fs_cfg --config 
 pcs -f fs_cfg constraint colocation add asterisk with ClusterIP INFINITY
 pcs -f fs_cfg constraint order mysql then asterisk
-sleep 2
-pcs cluster cib-push fs_cfg
+pcs cluster cib-push fs_cfg --config 
 #Changing these values from 15s (default) to 120s is very important 
 #since depending on the server and the number of extensions 
 #the Asterisk can take more than 15s to start
@@ -578,13 +574,11 @@ echo -e "************************************************************"
 echo -e "*                 Create VitalPBX Service                  *"
 echo -e "************************************************************"
 pcs resource create vpbx-monitor service:vpbx-monitor op monitor interval=30s
-pcs cluster cib fs_cfg
-sleep 2
-pcs cluster cib-push fs_cfg 
+pcs cluster cib fs_cfg --config 
+pcs cluster cib-push fs_cfg --config 
 pcs -f fs_cfg constraint colocation add vpbx-monitor with ClusterIP INFINITY
 pcs -f fs_cfg constraint order asterisk then vpbx-monitor
-sleep 2
-pcs cluster cib-push fs_cfg
+pcs cluster cib-push fs_cfg --config 
 echo -e "*** Done Step 20 ***"
 echo -e "20"	> step.txt
 
@@ -593,12 +587,10 @@ echo -e "************************************************************"
 echo -e "*                 Create fail2ban Service                  *"
 echo -e "************************************************************"
 pcs resource create fail2ban service:fail2ban op monitor interval=30s
-pcs cluster cib fs_cfg
-sleep 2
+pcs cluster cib fs_cfg --config 
 pcs cluster cib-push fs_cfg --config
 pcs -f fs_cfg constraint colocation add fail2ban with ClusterIP INFINITY
 pcs -f fs_cfg constraint order asterisk then fail2ban
-sleep 2
 pcs cluster cib-push fs_cfg --config
 echo -e "*** Done Step 21 ***"
 echo -e "21"	> step.txt
