@@ -237,8 +237,10 @@ echo -e "*             Configuring Temporal Firewall                *"
 echo -e "************************************************************"
 #Create temporal Firewall Rules in Server 1 and 2
 firewall-cmd --permanent --add-service=high-availability
+firewall-cmd --permanent --add-rich-rule="rule family="ipv4" port port="7789" protocol="tcp" accept"
 firewall-cmd --reload
 ssh root@$ip_standby "firewall-cmd --permanent --add-service=high-availability"
+ssh root@$ip_slave "firewall-cmd --permanent --add-rich-rule='rule family="ipv4" port port="7789" protocol="tcp" accept'"
 ssh root@$ip_standby "firewall-cmd --reload"
 
 echo -e "************************************************************"
@@ -251,6 +253,7 @@ mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, por
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA5404-5405', 'udp', '5404-5405')"
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA21064', 'tcp', '21064')"
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA9929', 'both', '9929')"
+mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('DRBD7789', 'tcp', '7789')"
 echo -e "************************************************************"
 echo -e "*             Configuring Permanent Firewall               *"
 echo -e "*     Creating Firewall Rules in VitalPBX in Server 1      *"
@@ -283,6 +286,9 @@ last_index=$last_index+1
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_arbitrator', 'accept', $last_index)"
 last_index=$last_index+1
 service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA9929'" | awk 'NR==2')
+mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
+last_index=$last_index+1
+service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'DRBD7789'" | awk 'NR==2')
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
 last_index=$last_index+1
 mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
