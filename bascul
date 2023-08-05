@@ -57,17 +57,17 @@ if [[ "${perform_bascul}" = "yes" ]]; then
         pcs node unstandby $host_standby
         #Do a loop per resource
         pcs status resources | awk '{print $2}' | while read -r resource ; do
-                #Skip moving the virutal_ip resource, it will be moved at the end
-                if [[ "${resource}" != "virtual_ip" ]] && [[ "${resource}" != "Clone" ]] && [[ "${resource}" != "Masters:" ]] && [[ "${resource}" != "Slaves:" ]]; then
+                #Skip moving the ClusterIP resource, it will be moved at the end
+                if [[ "${resource}" != "ClusterIP" ]] && [[ "${resource}" != "Clone" ]] && [[ "${resource}" != "Masters:" ]] && [[ "${resource}" != "Slaves:" ]]; then
                         echo "Moving ${resource} from ${host_master} to ${host_standby}"
                         pcs resource move ${resource} ${host_standby}
                 fi
         done
         sleep 5 && pcs node standby $host_master & #Standby current Master node after five seconds
         sleep 20 && pcs node unstandby $host_master & #Automatically Unstandby current Master node after$
-        #Move the Virtual IP resource to standby node
-        echo "Moving virutal_ip from ${host_master} to ${host_standby}"
-        pcs resource move virtual_ip ${host_standby}
+        #Move the ClusterIP resource to standby node
+        echo "Moving ClusterIP from ${host_master} to ${host_standby}"
+        pcs resource move ClusterIP ${host_standby}
         #End the script
         echo "Becoming ${host_standby} to Master"
         progress-bar 10
