@@ -433,6 +433,7 @@ create_drbd_resource:
 echo -e "************************************************************"
 echo -e "*             Create drbd resource in Server 1             *"
 echo -e "************************************************************"
+pcs cluster cib drbd_cfg
 pcs -f drbd_cfg resource create DrbdData ocf:linbit:drbd drbd_resource=drbd0 op monitor interval=60s
 pcs -f drbd_cfg resource promotable DrbdData promoted-max=1 promoted-node-max=1 clone-max=2 clone-node-max=1 notify=true
 pcs cluster cib-push drbd_cfg --config 
