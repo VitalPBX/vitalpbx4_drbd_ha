@@ -186,23 +186,6 @@ echo -e "*****************************************************************"
 		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA9929'"
   		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'DRBD7789'"
 		echo -e "************************************************************"
-		echo -e "*                      Enable Services                     *"
-		echo -e "************************************************************"    
-		
-  		
-    		systemctl enable fail2ban
-      		systemctl enable vpbx-monitor
-		
-
-		systemctl restart fail2ban
-		systemctl restart vpbx-monitor
-
-		
-		ssh root@$ip_standby "systemctl enable fail2ban"
-  		ssh root@$ip_standby "systemctl enable vpbx-monitor"
-		ssh root@$ip_standby "systemctl restart fail2ban"
-  		ssh root@$ip_standby "systemctl restart vpbx-monitor"
-		echo -e "************************************************************"
 		echo -e "*  Remove memory Firewall Rules in Server 1 and 2 and App  *"
 		echo -e "************************************************************"
 		firewall-cmd --remove-service=high-availability
@@ -270,6 +253,34 @@ echo -e "*****************************************************************"
   		ssh root@$ip_standby "systemctl enable asterisk"
       		ssh root@$ip_standby "systemctl restart asterisk"
 		echo -e "************************************************************"
+		echo -e "*                      Enable Services                     *"
+		echo -e "************************************************************"    
+    		systemctl enable fail2ban
+      		systemctl enable vpbx-monitor
+		systemctl restart fail2ban
+		systemctl restart vpbx-monitor
+		ssh root@$ip_standby "systemctl enable fail2ban"
+  		ssh root@$ip_standby "systemctl enable vpbx-monitor"
+		ssh root@$ip_standby "systemctl restart fail2ban"
+  		ssh root@$ip_standby "systemctl restart vpbx-monitor"
+		echo -e "************************************************************"
+		echo -e "*           Removing DRBD Devices and Volumes              *"
+		echo -e "************************************************************"  
+    		drbdsetup detach /dev/drbd0
+		drbdsetup del-minor /dev/drbd0
+		ssh root@$ip_standby "drbdsetup detach /dev/drbd0"
+		ssh root@$ip_standby "drbdsetup del-minor /dev/drbd0"
+		rm -rf /etc/drbd.d/global_common.conf
+    		mv /etc/drbd.d/global_common.conf.orig /etc/drbd.d/global_common.conf
+		ssh root@$ip_standby "rm -rf /etc/drbd.d/global_common.conf"
+  		ssh root@$ip_standby "mv /etc/drbd.d/global_common.conf.orig /etc/drbd.d/global_common.conf"
+		rm -rf /etc/drbd.d/drbd0.res
+    		ssh root@$ip_standby "rm -rf /etc/drbd.d/drbd0.res"
+      		systemctl disable drbd
+		systemctl atop drbd
+      		ssh root@$ip_standby "systemctl disable drbd"
+		ssh root@$ip_standby "systemctl stop drbd"
+    		echo -e "************************************************************"
 		echo -e "*            Cluster destroyed successfully                *"
 		echo -e "************************************************************"
 	fi
