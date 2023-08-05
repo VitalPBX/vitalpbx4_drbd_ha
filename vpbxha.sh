@@ -150,7 +150,74 @@ echo -e "*****************************************************************"
 		echo -e "*** Done ***"
 		scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
 		ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
-  
+  		rm -rf /usr/local/bin/bascul		
+		rm -rf /usr/local/bin/role
+  		rm -rf /usr/local/bin/drbdsplit
+		ssh root@$ip_standby "rm -rf /usr/local/bin/bascul"
+		ssh root@$ip_standby "rm -rf /usr/local/bin/role"
+  		ssh root@$ip_standby "rm -rf /usr/local/bin/drbdsplit"
+		echo -e "************************************************************"
+		echo -e "*         Remove Firewall Services/Rules in Mariadb        *"
+		echo -e "************************************************************"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'MariaDB Client'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA2224'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA3121'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA5403'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA5404-5405'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA21064'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA9929'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+  		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'DRBD7789'" | awk 'NR==2')
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_whitelist WHERE description = 'Server 1 IP'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_whitelist WHERE description = 'Server 2 IP'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'MariaDB Client'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA2224'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA3121'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA5403'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA5404-5405'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA21064'"
+		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA9929'"
+  		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'DRBD7789'"
+		echo -e "************************************************************"
+		echo -e "*                      Enable Services                     *"
+		echo -e "************************************************************"    
+		systemctl enable asterisk
+  		systemctl enable mariadb
+    		systemctl enable fail2ban
+      		systemctl enable vpbx-monitor
+		systemctl restart asterisk
+  		systemctl restart mariadb
+		systemctl restart fail2ban
+		systemctl restart vpbx-monitor
+		ssh root@$ip_standby "systemctl enable asterisk"
+		ssh root@$ip_standby "systemctl enable mariadb"
+		ssh root@$ip_standby "systemctl enable fail2ban"
+  		ssh root@$ip_standby "systemctl enable vpbx-monitor"
+    		ssh root@$ip_standby "systemctl restart asterisk"
+		ssh root@$ip_standby "systemctl restart mariadb"
+		ssh root@$ip_standby "systemctl restart fail2ban"
+  		ssh root@$ip_standby "systemctl restart vpbx-monitor"
+		echo -e "************************************************************"
+		echo -e "*  Remove memory Firewall Rules in Server 1 and 2 and App  *"
+		echo -e "************************************************************"
+		firewall-cmd --remove-service=high-availability
+		firewall-cmd --zone=public --remove-port=3306/tcp
+		firewall-cmd --runtime-to-permanent
+		firewall-cmd --reload
+		ssh root@$ip_standby "firewall-cmd --remove-service=high-availability"
+		ssh root@$ip_standby "firewall-cmd --zone=public --remove-port=3306/tcp"
+		ssh root@$ip_standby "firewall-cmd --runtime-to-permanent"
+		ssh root@$ip_standby "firewall-cmd --reload"
+		echo -e "************************************************************"
+		echo -e "*            Cluster destroyed successfully                *"
+		echo -e "************************************************************"
 	fi
 
 stepFile=step.txt
