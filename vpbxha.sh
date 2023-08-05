@@ -322,7 +322,6 @@ scp /etc/drbd.d/global_common.conf root@$ip_standby:/etc/drbd.d/global_common.co
 
 cat > /etc/drbd.d/drbd0.res << EOF
 resource drbd0 {
-protocol C;
 on $host_master {
 	device /dev/drbd0;
    	disk /dev/$disk;
