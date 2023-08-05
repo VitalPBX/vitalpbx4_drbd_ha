@@ -188,20 +188,18 @@ echo -e "*****************************************************************"
 		echo -e "************************************************************"
 		echo -e "*                      Enable Services                     *"
 		echo -e "************************************************************"    
-		systemctl enable asterisk
-  		systemctl enable mariadb
+		
+  		
     		systemctl enable fail2ban
       		systemctl enable vpbx-monitor
-		systemctl restart asterisk
-  		systemctl restart mariadb
+		
+
 		systemctl restart fail2ban
 		systemctl restart vpbx-monitor
-		ssh root@$ip_standby "systemctl enable asterisk"
-		ssh root@$ip_standby "systemctl enable mariadb"
+
+		
 		ssh root@$ip_standby "systemctl enable fail2ban"
   		ssh root@$ip_standby "systemctl enable vpbx-monitor"
-    		ssh root@$ip_standby "systemctl restart asterisk"
-		ssh root@$ip_standby "systemctl restart mariadb"
 		ssh root@$ip_standby "systemctl restart fail2ban"
   		ssh root@$ip_standby "systemctl restart vpbx-monitor"
 		echo -e "************************************************************"
@@ -215,6 +213,62 @@ echo -e "*****************************************************************"
 		ssh root@$ip_standby "firewall-cmd --zone=public --remove-port=3306/tcp"
 		ssh root@$ip_standby "firewall-cmd --runtime-to-permanent"
 		ssh root@$ip_standby "firewall-cmd --reload"
+		echo -e "************************************************************"
+		echo -e "*                 Normalize MariaDB                        *"
+		echo -e "************************************************************"
+		cp -aR /vpbx_data/mysql/data* /var/lib/mysql/
+		sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+		ssh root@$ip_standby "sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
+		scp -r /var/lib/mysql/ root@$ip_standby:/var/lib/mysql/
+  		systemctl enable mariadb
+    		systemctl restart mariadb
+		ssh root@$ip_standby "systemctl enable mariadb"
+  		ssh root@$ip_standby "systemctl restart mariadb"
+		echo -e "************************************************************"
+		echo -e "*                  Normalize Asterisk                      *"
+		echo -e "************************************************************"
+
+		cd /vpbx_data
+		tar -zcvf var-asterisk.tgz var/log/asterisk 
+		tar -zcvf var-lib-asterisk.tgz var/lib/asterisk
+		tar -zcvf var-lib-vitalpbx.tgz var/lib/vitalpbx
+		tar -zcvf usr-lib-asterisk.tgz usr/lib/asterisk
+		tar -zcvf var-spool-asterisk.tgz var/spool/asterisk
+		tar -zcvf etc-asterisk.tgz etc/asterisk
+		rm -rf /var/log/asterisk 
+		rm -rf /var/lib/asterisk
+		rm -rf /var/lib/vitalpbx 
+		rm -rf /usr/lib/asterisk 
+		rm -rf /var/spool/asterisk 
+		rm -rf /etc/asterisk
+		tar xvfz var-asterisk.tgz -C /
+		tar xvfz var-lib-asterisk.tgz -C /
+		tar xvfz var-lib-vitalpbx.tgz -C /
+		tar xvfz usr-lib-asterisk.tgz -C /
+		tar xvfz var-spool-asterisk.tgz -C /
+		tar xvfz etc-asterisk.tgz -C /
+		rm -rf var-asterisk.tgz
+		rm -rf var-lib-asterisk.tgz
+		rm -rf var-lib-vitalpbx.tgz
+		rm -rf usr-lib-asterisk.tgz
+		rm -rf var-spool-asterisk.tgz
+		rm -rf etc-asterisk.tgz
+		ssh root@$ip_standby 'rm -rf /var/log/asterisk'
+		ssh root@$ip_standby 'rm -rf /var/lib/asterisk'
+		ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
+		ssh root@$ip_standby 'rm -rf /usr/lib/asterisk'
+		ssh root@$ip_standby 'rm -rf /var/spool/asterisk'
+		ssh root@$ip_standby 'rm -rf /etc/asterisk'
+ 		scp -r /var/log/asterisk/ root@$ip_standby:/var/log/asterisk/
+   		scp -r /var/lib/asterisk/ root@$ip_standby:/var/lib/asterisk/
+   		scp -r /var/lib/vitalpbx/ root@$ip_standby:/var/lib/vitalpbx/
+   		scp -r /usr/lib/asterisk/ root@$ip_standby:/usr/lib/asterisk/
+   		scp -r /var/spool/asterisk/ root@$ip_standby:/var/spool/asterisk/
+   		scp -r /etc/asterisk/ root@$ip_standby:/etc/asterisk/
+  		systemctl enable asterisk
+		systemctl restart asterisk
+  		ssh root@$ip_standby "systemctl enable asterisk"
+      		ssh root@$ip_standby "systemctl restart asterisk"
 		echo -e "************************************************************"
 		echo -e "*            Cluster destroyed successfully                *"
 		echo -e "************************************************************"
