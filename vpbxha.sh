@@ -163,6 +163,11 @@ echo -e "*****************************************************************"
 		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA9929'"
   		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'DRBD7789'"
   		echo -e "************************************************************"
+		echo -e "*                   Database backup                        *"
+		echo -e "************************************************************"  
+		mysqldump -u root --all-databases > all_databases.sql
+		scp all_databases.sql root@$ip_standby:/tmp/all_databases.sql
+    		echo -e "************************************************************"
 		echo -e "*                   Destroy Cluster                        *"
 		echo -e "************************************************************"  
   		pcs cluster stop
@@ -184,12 +189,13 @@ echo -e "*****************************************************************"
   		echo -e "************************************************************"
 		echo -e "*                 Normalize MariaDB in Master              *"
 		echo -e "************************************************************"
-  		systemctl stop mariadb
 		sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+    		echo -e "************************************************************"
+		echo -e "*                     DRBD Master Mount                    *"
+		echo -e "************************************************************"
   		drbdadm up drbd0
     		drbdadm primary drbd0 --force
       		mount /dev/drbd0 /vpbx_data
-		cp -aR /vpbx_data/mysql/data/*.* /var/lib/mysql/
 		echo -e "************************************************************"
 		echo -e "*                Normalize Asterisk in Master              *"
 		echo -e "************************************************************"
@@ -217,9 +223,7 @@ echo -e "*****************************************************************"
   		echo -e "************************************************************"
 		echo -e "*                 Normalize MariaDB in Slave              *"
 		echo -e "************************************************************"
-    		ssh root@$ip_standby "systemctl stop mariadb"
 		ssh root@$ip_standby "sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
-		ssh root@$ip_standby "cp -aR /vpbx_data/mysql/data/*.* /var/lib/mysql/"
 		echo -e "************************************************************"
 		echo -e "*                Normalize Asterisk in Slave              *"
 		echo -e "************************************************************"
@@ -300,6 +304,17 @@ echo -e "*****************************************************************"
 		ssh root@$ip_standby "systemctl stop drbd"
   		rm -rf /vpbx_data
     		ssh root@$ip_standby "rm -rf /vpbx_data"
+		echo -e "************************************************************"
+		echo -e "*                Recovery Databases                        *"
+		echo -e "************************************************************" 
+		mysql mysql -u root <  all_databases.sql
+		cat > /tmp/mysqldump.sh << EOF
+		#!/bin/bash
+		mysql mysql -u root <  /tmp/all_databases.sql 
+		EOF
+		scp /tmp/mysqldump.sh root@$ip_standby:/tmp/mysqldump.sh
+		ssh root@$ip_standby "chmod +x /tmp/mysqldump.sh"
+		ssh root@$ip_standby "/tmp/./mysqldump.sh"
     		echo -e "************************************************************"
 		echo -e "*            Cluster destroyed successfully                *"
 		echo -e "************************************************************"
