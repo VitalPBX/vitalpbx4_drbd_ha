@@ -133,30 +133,7 @@ echo -e "*****************************************************************"
 	read -p "Are you sure you want to completely destroy the cluster? (yes, no) > " veryfy_destroy 
 	done
 	if [ "$veryfy_destroy" = yes ] ;then
-		pcs cluster stop
-		pcs cluster destroy
-		systemctl disable pcsd.service 
-		systemctl disable corosync.service 
-		systemctl disable pacemaker.service
-		systemctl stop pcsd.service 
-		systemctl stop corosync.service 
-		systemctl stop pacemaker.service
-		echo -e "************************************************************"
-		echo -e "*            Creating Welcome message original             *"
-		echo -e "************************************************************"
-		wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/welcome
-    		yes | cp -fr welcome /etc/update-motd.d/20-vitalpbx
-		chmod 755 /etc/update-motd.d/20-vitalpbx
-		echo -e "*** Done ***"
-		scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
-		ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
-  		rm -rf /usr/local/bin/bascul		
-		rm -rf /usr/local/bin/role
-  		rm -rf /usr/local/bin/drbdsplit
-		ssh root@$ip_standby "rm -rf /usr/local/bin/bascul"
-		ssh root@$ip_standby "rm -rf /usr/local/bin/role"
-  		ssh root@$ip_standby "rm -rf /usr/local/bin/drbdsplit"
-		echo -e "************************************************************"
+ 		echo -e "************************************************************"
 		echo -e "*         Remove Firewall Services/Rules in Mariadb        *"
 		echo -e "************************************************************"
 		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'MariaDB Client'" | awk 'NR==2')
@@ -186,31 +163,15 @@ echo -e "*****************************************************************"
 		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA9929'"
   		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'DRBD7789'"
 		echo -e "************************************************************"
-		echo -e "*  Remove memory Firewall Rules in Server 1 and 2 and App  *"
-		echo -e "************************************************************"
-		firewall-cmd --remove-service=high-availability
-		firewall-cmd --zone=public --remove-port=3306/tcp
-		firewall-cmd --runtime-to-permanent
-		firewall-cmd --reload
-		ssh root@$ip_standby "firewall-cmd --remove-service=high-availability"
-		ssh root@$ip_standby "firewall-cmd --zone=public --remove-port=3306/tcp"
-		ssh root@$ip_standby "firewall-cmd --runtime-to-permanent"
-		ssh root@$ip_standby "firewall-cmd --reload"
-		echo -e "************************************************************"
 		echo -e "*                 Normalize MariaDB                        *"
 		echo -e "************************************************************"
 		cp -aR /vpbx_data/mysql/data* /var/lib/mysql/
 		sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf
 		ssh root@$ip_standby "sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 		scp -r /var/lib/mysql/ root@$ip_standby:/var/lib/mysql/
-  		systemctl enable mariadb
-    		systemctl restart mariadb
-		ssh root@$ip_standby "systemctl enable mariadb"
-  		ssh root@$ip_standby "systemctl restart mariadb"
 		echo -e "************************************************************"
 		echo -e "*                  Normalize Asterisk                      *"
 		echo -e "************************************************************"
-
 		cd /vpbx_data
 		tar -zcvf var-asterisk.tgz var/log/asterisk 
 		tar -zcvf var-lib-asterisk.tgz var/lib/asterisk
@@ -248,18 +209,59 @@ echo -e "*****************************************************************"
    		scp -r /usr/lib/asterisk/ root@$ip_standby:/usr/lib/asterisk/
    		scp -r /var/spool/asterisk/ root@$ip_standby:/var/spool/asterisk/
    		scp -r /etc/asterisk/ root@$ip_standby:/etc/asterisk/
-  		systemctl enable asterisk
-		systemctl restart asterisk
-  		ssh root@$ip_standby "systemctl enable asterisk"
-      		ssh root@$ip_standby "systemctl restart asterisk"
+  		echo -e "************************************************************"
+		echo -e "*                   Destroy Cluster                        *"
+		echo -e "************************************************************"  
+  		pcs cluster stop
+		pcs cluster destroy
+		systemctl disable pcsd.service 
+		systemctl disable corosync.service 
+		systemctl disable pacemaker.service
+		systemctl stop pcsd.service 
+		systemctl stop corosync.service 
+		systemctl stop pacemaker.service
+		echo -e "************************************************************"
+		echo -e "*            Creating Welcome message original             *"
+		echo -e "************************************************************"
+		wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/welcome
+    		yes | cp -fr welcome /etc/update-motd.d/20-vitalpbx
+		chmod 755 /etc/update-motd.d/20-vitalpbx
+		echo -e "*** Done ***"
+		scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
+		ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
+  		rm -rf /usr/local/bin/bascul		
+		rm -rf /usr/local/bin/role
+  		rm -rf /usr/local/bin/drbdsplit
+		ssh root@$ip_standby "rm -rf /usr/local/bin/bascul"
+		ssh root@$ip_standby "rm -rf /usr/local/bin/role"
+  		ssh root@$ip_standby "rm -rf /usr/local/bin/drbdsplit"
+		echo -e "************************************************************"
+		echo -e "*  Remove memory Firewall Rules in Server 1 and 2 and App  *"
+		echo -e "************************************************************"
+		firewall-cmd --remove-service=high-availability
+		firewall-cmd --zone=public --remove-port=3306/tcp
+		firewall-cmd --runtime-to-permanent
+		firewall-cmd --reload
+		ssh root@$ip_standby "firewall-cmd --remove-service=high-availability"
+		ssh root@$ip_standby "firewall-cmd --zone=public --remove-port=3306/tcp"
+		ssh root@$ip_standby "firewall-cmd --runtime-to-permanent"
+		ssh root@$ip_standby "firewall-cmd --reload"
 		echo -e "************************************************************"
 		echo -e "*                      Enable Services                     *"
-		echo -e "************************************************************"    
+		echo -e "************************************************************"   
+    		systemctl enable asterisk
+		systemctl restart asterisk
+    		systemctl enable mariadb
+    		systemctl restart mariadb
     		systemctl enable fail2ban
       		systemctl enable vpbx-monitor
 		systemctl restart fail2ban
 		systemctl restart vpbx-monitor
-		ssh root@$ip_standby "systemctl enable fail2ban"
+  		ssh root@$ip_standby "systemctl enable asterisk"
+      		ssh root@$ip_standby "systemctl restart asterisk"
+  		ssh root@$ip_standby "systemctl enable mariadb"
+  		ssh root@$ip_standby "systemctl restart mariadb"
+  		ssh root@$ip_standby "systemctl enable fail2ban"
   		ssh root@$ip_standby "systemctl enable vpbx-monitor"
 		ssh root@$ip_standby "systemctl restart fail2ban"
   		ssh root@$ip_standby "systemctl restart vpbx-monitor"
