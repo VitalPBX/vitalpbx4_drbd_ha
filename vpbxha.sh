@@ -243,7 +243,7 @@ firewall-cmd --permanent --add-service=high-availability
 firewall-cmd --permanent --add-rich-rule="rule family="ipv4" port port="7789" protocol="tcp" accept"
 firewall-cmd --reload
 ssh root@$ip_standby "firewall-cmd --permanent --add-service=high-availability"
-ssh root@$ip_slave "firewall-cmd --permanent --add-rich-rule='rule family="ipv4" port port="7789" protocol="tcp" accept'"
+ssh root@$ip_standby "firewall-cmd --permanent --add-rich-rule='rule family="ipv4" port port="7789" protocol="tcp" accept'"
 ssh root@$ip_standby "firewall-cmd --reload"
 
 echo -e "************************************************************"
