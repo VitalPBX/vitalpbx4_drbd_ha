@@ -203,7 +203,7 @@ case $step in
 		start="ceate_welcome_message"
 	;;
 	25)
-		start="vitalpbx_ceate_destroy"
+		start="vitalpbx_ceate_destroy_rebuild"
 	;;
 esac
 jumpto $start
@@ -631,17 +631,27 @@ ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
 echo -e "*** Done Step 25 END ***"
 echo -e "25"	> step.txt
 
-vitalpbx_ceate_destroy:
+vitalpbx_ceate_destroy_rebuild:
 echo -e "************************************************************"
-echo -e "*             Creating VitalPBX destroy Command             *"
+echo -e "*    Creating VitalPBX destroy.sh and rebuild.sh Command    *"
 echo -e "************************************************************"
-wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/destroy
-yes | cp -fr drbdsplit /usr/local/bin/destroy
-chmod +x /usr/local/bin/destroy
-scp /usr/local/bin/drbdsplit root@$ip_standby:/usr/local/bin/destroy
-ssh root@$ip_standby 'chmod +x /usr/local/bin/destroy'
+wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/destroy.sh
+chmod +x destroy.sh
+wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/rebuild.sh
+chmod +x rebuild.sh
 echo -e "*** Done Step 26 ***"
 echo -e "26"	> step.txt
+ssh root@$ip_standby "mkdir -p /usr/share/vitalpbx/ha"
+scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/vpbxha.sh
+ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/vpbxha.sh"
+scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/destroy.sh
+ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/destroy.sh"
+scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/rebuild.sh
+ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/rebuild.sh"
+scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/step.txt
+ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/step.txt"
+scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/config.txt
+ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/config.txt"
 
 vitalpbx_cluster_ok:
 echo -e "************************************************************"
