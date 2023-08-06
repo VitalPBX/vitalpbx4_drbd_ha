@@ -15,7 +15,7 @@ function jumpto
 
 echo -e "\n"
 echo -e "************************************************************"
-echo -e "*  Welcome to the VitalPBX high availability installation  *"
+echo -e "*    Welcome to the VitalPBX high availability rebuild     *"
 echo -e "*                All options are mandatory                 *"
 echo -e "************************************************************"
 
@@ -146,63 +146,60 @@ case $step in
 		start="configure_drbd"
   	;;
 	6)
-		start="formating_drbd"
-  	;;
-	7)
 		start="create_hacluster_password"
   	;;
-	8)
+	7)
 		start="starting_pcs"
   	;;
-	9)
+	8)
 		start="auth_hacluster"
 	;;
-	10)
+	9)
 		start="creating_cluster"
   	;;
-	11)
+	10)
 		start="starting_cluster"
   	;;
-	12)
+	11)
 		start="creating_floating_ip"
   	;;
-	13)
+	12)
 		start="create_drbd_resource"
   	;;
-	14)
+	13)
 		start="create_filesystem_resource"
   	;;
-	15)
+	14)
 		start="disable_services"
   	;;
-	16)
+	15)
 		start="create_mariadb_service"
 	;;
-	17)
+	16)
 		start="create_asterisk_service"
 	;;
-	18)
+	17)
 		start="copy_asterisk_files"
 	;;
-	19)
+	18)
 		start="create_vitalpbx_service"
 	;;
-	20)
+	19)
 		start="create_fail2ban_service"
 	;;
-	21)
+	20)
 		start="vitalpbx_create_bascul"
 	;;
-	22)
+	21)
 		start="vitalpbx_create_role"
 	;;
-	23)
+	22)
 		start="vitalpbx_create_drbdsplit"
 	;;
-	24)
+	23)
 		start="ceate_welcome_message"
 	;;
-	25)
+	24)
 		start="vitalpbx_ceate_destroy"
 	;;
 esac
@@ -212,12 +209,8 @@ echo -e "1"	> step.txt
 
 format_partition:
 echo -e "************************************************************"
-echo -e "*             Format new drive in Master/Slave             *"
+echo -e "*               Format new drive in Slave                  *"
 echo -e "************************************************************"
-mkdir /vpbx_data
-ssh root@$ip_standby "mkdir /vpbx_data"
-mke2fs -j /dev/$disk
-dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync
 ssh root@$ip_standby "mke2fs -j /dev/$disk"
 ssh root@$ip_standby "dd if=/dev/zero bs=1M count=500 of=/dev/$disk; sync"
 echo -e "*** Done Step 2 ***"
@@ -225,10 +218,8 @@ echo -e "2"	> step.txt
 
 create_hostname:
 echo -e "************************************************************"
-echo -e "*          Creating hosts name in Master/Standby           *"
+echo -e "*               Creating hosts name in Slave               *"
 echo -e "************************************************************"
-echo -e "$ip_master \t$host_master" >> /etc/hosts
-echo -e "$ip_standby \t$host_standby" >> /etc/hosts
 ssh root@$ip_standby "echo -e '$ip_master \t$host_master' >> /etc/hosts"
 ssh root@$ip_standby "echo -e '$ip_standby \t$host_standby' >> /etc/hosts"
 echo -e "*** Done Step 3 ***"
@@ -239,74 +230,17 @@ echo -e "************************************************************"
 echo -e "*             Configuring Temporal Firewall                *"
 echo -e "************************************************************"
 #Create temporal Firewall Rules in Server 1 and 2
-firewall-cmd --permanent --add-service=high-availability
-firewall-cmd --permanent --add-rich-rule="rule family="ipv4" port port="7789" protocol="tcp" accept"
-firewall-cmd --reload
 ssh root@$ip_standby "firewall-cmd --permanent --add-service=high-availability"
 ssh root@$ip_slave "firewall-cmd --permanent --add-rich-rule='rule family="ipv4" port port="7789" protocol="tcp" accept'"
 ssh root@$ip_standby "firewall-cmd --reload"
-
-echo -e "************************************************************"
-echo -e "*             Configuring Permanent Firewall               *"
-echo -e "*   Creating Firewall Services in VitalPBX in Server 1     *"
-echo -e "************************************************************"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA2224', 'tcp', '2224')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA3121', 'tcp', '3121')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA5403', 'tcp', '5403')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA5404-5405', 'udp', '5404-5405')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA21064', 'tcp', '21064')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('HA9929', 'both', '9929')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_services (name, protocol, port) VALUES ('DRBD7789', 'tcp', '7789')"
-echo -e "************************************************************"
-echo -e "*             Configuring Permanent Firewall               *"
-echo -e "*     Creating Firewall Rules in VitalPBX in Server 1      *"
-echo -e "************************************************************"
-last_index=$(mysql -uroot ombutel -e "SELECT MAX(\`index\`) AS Consecutive FROM ombu_firewall_rules"  | awk 'NR==2')
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA2224'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA3121'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA5403'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA5404-5405'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA21064'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_arbitrator', 'accept', $last_index)"
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA9929'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'DRBD7789'" | awk 'NR==2')
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_master', 'accept', $last_index)"
-last_index=$last_index+1
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_rules (firewall_service_id, source, action, \`index\`) VALUES ($service_id, '$ip_standby', 'accept', $last_index)"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_whitelist (host, description, \`default\`) VALUES ('$ip_master', 'Server 1 IP', 'no')"
-mysql -uroot ombutel -e "INSERT INTO ombu_firewall_whitelist (host, description, \`default\`) VALUES ('$ip_standby', 'Server 2 IP', 'no')"
 echo -e "*** Done Step 4 ***"
 echo -e "4"	> step.txt
 
 loading_drbd:
 echo -e "************************************************************"
-echo -e "*               Loading drbd in Master/Slave               *"
+echo -e "*                  Loading drbd in Slave                   *"
 echo -e "************************************************************"
-modprobe drbd
 ssh root@$ip_standby "modprobe drbd"
-systemctl enable drbd.service
 ssh root@$ip_standby "systemctl enable drbd.service"
 echo -e "*** Done Step 5 ***"
 echo -e "5"	> step.txt
@@ -315,57 +249,14 @@ configure_drbd:
 echo -e "************************************************************"
 echo -e "*       Configure drbr resources in Master/Slave           *"
 echo -e "************************************************************"
-mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig
 ssh root@$ip_standby "mv /etc/drbd.d/global_common.conf /etc/drbd.d/global_common.conf.orig"
-cat > /etc/drbd.d/global_common.conf << EOF
-global {
-  	usage-count no;
-}
-common {
-	net {
-  		protocol C;
-  	}
-}
-EOF
 scp /etc/drbd.d/global_common.conf root@$ip_standby:/etc/drbd.d/global_common.conf
-
-cat > /etc/drbd.d/drbd0.res << EOF
-resource drbd0 {
-on $host_master {
-	device /dev/drbd0;
-   	disk /dev/$disk;
-   	address $ip_master:7789;
-	meta-disk internal;
-	}
-on $host_standby {
-	device /dev/drbd0;
-   	disk /dev/$disk;
-   	address $ip_standby:7789;
-	meta-disk internal;
-   	}
-}
-EOF
-
 scp /etc/drbd.d/drbd0.res root@$ip_standby:/etc/drbd.d/drbd0.res
-drbdadm create-md drbd0
 ssh root@$ip_standby "drbdadm create-md drbd0"
-drbdadm up drbd0
-drbdadm primary drbd0 --force
 ssh root@$ip_standby "drbdadm up drbd0"
 sleep 3
 echo -e "*** Done Step 6 ***"
 echo -e "6"	> step.txt
-
-formating_drbd:
-echo -e "************************************************************"
-echo -e "*              Formating drbd disk in Master               *"
-echo -e "*           Wait, this process may take a while            *"
-echo -e "************************************************************"
-mkfs.xfs /dev/drbd0
-mount /dev/drbd0 /vpbx_data
-sleep 3
-echo -e "*** Done Step 7 ***"
-echo -e "7"	> step.txt
 
 create_hacluster_password:
 echo -e "************************************************************"
@@ -373,8 +264,8 @@ echo -e "*     Create password for hacluster in Master/Standby      *"
 echo -e "************************************************************"
 echo hacluster:$hapassword | chpasswd
 ssh root@$ip_standby "echo hacluster:$hapassword | chpasswd"
-echo -e "*** Done Step 8 ***"
-echo -e "8"	> step.txt
+echo -e "*** Done Step 7 ***"
+echo -e "7"	> step.txt
 
 starting_pcs:
 echo -e "************************************************************"
@@ -388,8 +279,8 @@ systemctl enable pacemaker.service
 ssh root@$ip_standby "systemctl enable pcsd.service"
 ssh root@$ip_standby "systemctl enable corosync.service"
 ssh root@$ip_standby "systemctl enable pacemaker.service"
-echo -e "*** Done Step 9 ***"
-echo -e "9"	> step.txt
+echo -e "*** Done Step 8 ***"
+echo -e "8"	> step.txt
 
 auth_hacluster:
 echo -e "************************************************************"
@@ -397,16 +288,16 @@ echo -e "*            Server Authenticate in Master                 *"
 echo -e "************************************************************"
 pcs cluster destroy
 pcs host auth $host_master $host_standby -u hacluster -p $hapassword
-echo -e "*** Done Step 10 ***"
-echo -e "10"	> step.txt
+echo -e "*** Done Step 9 ***"
+echo -e "9"	> step.txt
 
 creating_cluster:
 echo -e "************************************************************"
 echo -e "*              Creating Cluster in Master                  *"
 echo -e "************************************************************"
 pcs cluster setup cluster_vitalpbx $host_master $host_standby --force
-echo -e "*** Done Step 11 ***"
-echo -e "11"	> step.txt
+echo -e "*** Done Step 10 ***"
+echo -e "10"	> step.txt
 
 starting_cluster:
 echo -e "************************************************************"
@@ -416,8 +307,8 @@ pcs cluster start --all
 pcs cluster enable --all
 pcs property set stonith-enabled=false
 pcs property set no-quorum-policy=ignore
-echo -e "*** Done Step 12 ***"
-echo -e "12"	> step.txt
+echo -e "*** Done Step 11 ***"
+echo -e "11"	> step.txt
 
 creating_floating_ip:
 echo -e "************************************************************"
@@ -427,8 +318,8 @@ pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask
 pcs cluster cib drbd_cfg
 sleep 2
 pcs cluster cib-push drbd_cfg
-echo -e "*** Done Step 13 ***"
-echo -e "13"	> step.txt
+echo -e "*** Done Step 12 ***"
+echo -e "12"	> step.txt
 
 create_drbd_resource:
 echo -e "************************************************************"
@@ -439,8 +330,8 @@ pcs -f drbd_cfg resource create DrbdData ocf:linbit:drbd drbd_resource=drbd0 op 
 pcs -f drbd_cfg resource promotable DrbdData promoted-max=1 promoted-node-max=1 clone-max=2 clone-node-max=1 notify=true
 pcs cluster cib fs_cfg
 pcs cluster cib-push drbd_cfg --config
-echo -e "*** Done Step 14 ***"
-echo -e "14"	> step.txt
+echo -e "*** Done Step 13 ***"
+echo -e "13"	> step.txt
 
 create_filesystem_resource:
 echo -e "************************************************************"
@@ -453,8 +344,8 @@ pcs -f fs_cfg constraint order promote DrbdData-clone then start DrbdFS
 pcs -f fs_cfg constraint colocation add DrbdFS with ClusterIP INFINITY
 pcs -f fs_cfg constraint order ClusterIP then DrbdFS
 pcs cluster cib-push fs_cfg --config
-echo -e "*** Done Step 15 ***"
-echo -e "15"	> step.txt
+echo -e "*** Done Step 14 ***"
+echo -e "14"	> step.txt
 
 disable_services:
 echo -e "************************************************************"
@@ -476,18 +367,13 @@ ssh root@$ip_standby "systemctl disable asterisk"
 ssh root@$ip_standby "systemctl stop asterisk"
 ssh root@$ip_standby "systemctl disable vpbx-monitor"
 ssh root@$ip_standby "systemctl stop vpbx-monitor"
-echo -e "*** Done Step 16 ***"
-echo -e "16"	> step.txt
+echo -e "*** Done Step 15 ***"
+echo -e "15"	> step.txt
 
 create_mariadb_service:
 echo -e "************************************************************"
 echo -e "*          Create MariaDB Service in Server 1              *"
 echo -e "************************************************************"
-mkdir /vpbx_data/mysql
-mkdir /vpbx_data/mysql/data
-cp -aR /var/lib/mysql/* /vpbx_data/mysql/data
-chown -R mysql:mysql /vpbx_data/mysql
-sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
 ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
 pcs resource create mysql service:mariadb op monitor interval=30s 
 pcs cluster cib fs_cfg 
@@ -495,16 +381,13 @@ pcs cluster cib-push fs_cfg --config
 pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
 pcs -f fs_cfg constraint order DrbdFS then mysql
 pcs cluster cib-push fs_cfg --config 
-echo -e "*** Done Step 17 ***"
-echo -e "17"	> step.txt
+echo -e "*** Done Step 16 ***"
+echo -e "16"	> step.txt
 
 create_asterisk_service:
 echo -e "************************************************************"
 echo -e "*          Create Asterisk Service in Server 1             *"
 echo -e "************************************************************"
-sed -i 's/RestartSec=10/RestartSec=1/g'  /usr/lib/systemd/system/asterisk.service
-sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
-sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
 pcs resource create asterisk service:asterisk op monitor interval=30s
 pcs cluster cib fs_cfg 
 pcs cluster cib-push fs_cfg --config 
@@ -517,31 +400,13 @@ pcs cluster cib-push fs_cfg --config
 pcs resource update asterisk op stop timeout=120s
 pcs resource update asterisk op start timeout=120s
 pcs resource update asterisk op restart timeout=120s
-echo -e "*** Done Step 18 ***"
-echo -e "18"	> step.txt
+echo -e "*** Done Step 17 ***"
+echo -e "17"	> step.txt
 
 copy_asterisk_files:
 echo -e "************************************************************"
 echo -e "*            Copy Asterisk File in DRBD Disk               *"
 echo -e "************************************************************"
-cp -aR /var/log/asterisk /vpbx_data/var/log/asterisk
-cp -aR /var/lib/asterisk /vpbx_data/var/lib/asterisk
-cp -aR /var/lib/vitalpbx /vpbx_data/var/lib/vitalpbx
-cp -aR /usr/lib/asterisk /vpbx_data/usr/lib/asterisk
-cp -aR /var/spool/asterisk /vpbx_data/var/spool/asterisk
-cp -aR /etc/asterisk /vpbx_data/etc/asterisk
-rm -rf /var/log/asterisk 
-rm -rf /var/lib/asterisk
-rm -rf /var/lib/vitalpbx 
-rm -rf /usr/lib/asterisk
-rm -rf /var/spool/asterisk
-rm -rf /etc/asterisk 
-ln -s /vpbx_data/var/log/asterisk /var/log/asterisk 
-ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk
-ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx 
-ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk 
-ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk 
-ln -s /vpbx_data/etc/asterisk /etc/asterisk
 ssh root@$ip_standby 'rm -rf /var/log/asterisk'
 ssh root@$ip_standby 'rm -rf /var/lib/asterisk'
 ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
@@ -554,8 +419,8 @@ ssh root@$ip_standby 'ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx'
 ssh root@$ip_standby 'ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk'
 ssh root@$ip_standby 'ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk' 
 ssh root@$ip_standby 'ln -s /vpbx_data/etc/asterisk /etc/asterisk'
-echo -e "*** Done Step 19 ***"
-echo -e "19"	> step.txt
+echo -e "*** Done Step 18 ***"
+echo -e "18"	> step.txt
 
 create_vitalpbx_service:
 echo -e "************************************************************"
@@ -567,8 +432,8 @@ pcs cluster cib-push fs_cfg --config
 pcs -f fs_cfg constraint colocation add vpbx-monitor with ClusterIP INFINITY
 pcs -f fs_cfg constraint order asterisk then vpbx-monitor
 pcs cluster cib-push fs_cfg --config 
-echo -e "*** Done Step 20 ***"
-echo -e "20"	> step.txt
+echo -e "*** Done Step 19 ***"
+echo -e "19"	> step.txt
 
 create_fail2ban_service:
 echo -e "************************************************************"
@@ -580,8 +445,8 @@ pcs cluster cib-push fs_cfg --config
 pcs -f fs_cfg constraint colocation add fail2ban with ClusterIP INFINITY
 pcs -f fs_cfg constraint order asterisk then fail2ban
 pcs cluster cib-push fs_cfg --config
-echo -e "*** Done Step 21 ***"
-echo -e "21"	> step.txt
+echo -e "*** Done Step 20 ***"
+echo -e "20"	> step.txt
 
 vitalpbx_create_bascul:
 echo -e "************************************************************"
@@ -592,8 +457,8 @@ yes | cp -fr bascul /usr/local/bin/bascul
 chmod +x /usr/local/bin/bascul
 scp /usr/local/bin/bascul root@$ip_standby:/usr/local/bin/bascul
 ssh root@$ip_standby 'chmod +x /usr/local/bin/bascul'
-echo -e "*** Done Step 22 ***"
-echo -e "22"	> step.txt
+echo -e "*** Done Step 21 ***"
+echo -e "21"	> step.txt
 
 vitalpbx_create_role:
 echo -e "************************************************************"
@@ -604,8 +469,8 @@ yes | cp -fr role /usr/local/bin/role
 chmod +x /usr/local/bin/role
 scp /usr/local/bin/role root@$ip_standby:/usr/local/bin/role
 ssh root@$ip_standby 'chmod +x /usr/local/bin/role'
-echo -e "*** Done Step 23 ***"
-echo -e "23"	> step.txt
+echo -e "*** Done Step 22 ***"
+echo -e "22"	> step.txt
 
 vitalpbx_create_drbdsplit:
 echo -e "************************************************************"
@@ -616,8 +481,8 @@ yes | cp -fr drbdsplit /usr/local/bin/drbdsplit
 chmod +x /usr/local/bin/drbdsplit
 scp /usr/local/bin/drbdsplit root@$ip_standby:/usr/local/bin/drbdsplit
 ssh root@$ip_standby 'chmod +x /usr/local/bin/drbdsplit'
-echo -e "*** Done Step 24 ***"
-echo -e "24"	> step.txt
+echo -e "*** Done Step 23 ***"
+echo -e "23"	> step.txt
 
 ceate_welcome_message:
 echo -e "************************************************************"
@@ -628,8 +493,8 @@ chmod 755 /etc/update-motd.d/20-vitalpbx
 echo -e "*** Done ***"
 scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
 ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
-echo -e "*** Done Step 25 END ***"
-echo -e "25"	> step.txt
+echo -e "*** Done Step 24 ***"
+echo -e "24"	> step.txt
 
 vitalpbx_ceate_destroy:
 echo -e "************************************************************"
@@ -640,8 +505,8 @@ yes | cp -fr drbdsplit /usr/local/bin/destroy
 chmod +x /usr/local/bin/destroy
 scp /usr/local/bin/drbdsplit root@$ip_standby:/usr/local/bin/destroy
 ssh root@$ip_standby 'chmod +x /usr/local/bin/destroy'
-echo -e "*** Done Step 26 ***"
-echo -e "26"	> step.txt
+echo -e "*** Done Step 25 END ***"
+echo -e "25"	> step.txt
 
 vitalpbx_cluster_ok:
 echo -e "************************************************************"
