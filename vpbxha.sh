@@ -133,40 +133,6 @@ echo -e "*****************************************************************"
 	read -p "Are you sure you want to completely destroy the cluster? (yes, no) > " veryfy_destroy 
 	done
 	if [ "$veryfy_destroy" = yes ] ;then
- 		echo -e "************************************************************"
-		echo -e "*         Remove Firewall Services/Rules in Mariadb        *"
-		echo -e "************************************************************"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'MariaDB Client'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA2224'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA3121'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA5403'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA5404-5405'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA21064'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'HA9929'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-  		service_id=$(mysql -uroot ombutel -e "select firewall_service_id from ombu_firewall_services where name = 'DRBD7789'" | awk 'NR==2')
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_rules WHERE firewall_service_id = $service_id"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_whitelist WHERE description = 'Server 1 IP'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_whitelist WHERE description = 'Server 2 IP'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'MariaDB Client'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA2224'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA3121'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA5403'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA5404-5405'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA21064'"
-		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'HA9929'"
-  		mysql -uroot ombutel -e "DELETE FROM ombu_firewall_services WHERE name = 'DRBD7789'"
-  		echo -e "************************************************************"
-		echo -e "*                   Database backup                        *"
-		echo -e "************************************************************"  
-		mysqldump -u root --all-databases > all_databases.sql
-		scp all_databases.sql root@$ip_standby:/tmp/all_databases.sql
     		echo -e "************************************************************"
 		echo -e "*                   Destroy Cluster                        *"
 		echo -e "************************************************************"  
@@ -186,59 +152,12 @@ echo -e "*****************************************************************"
     		ssh root@$ip_standby "systemctl stop pcsd.service"
     		ssh root@$ip_standby "systemctl stop corosync.service"
     		ssh root@$ip_standby "systemctl stop pacemaker.service"
-  		echo -e "************************************************************"
-		echo -e "*                 Normalize MariaDB in Master              *"
-		echo -e "************************************************************"
-		sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf
     		echo -e "************************************************************"
 		echo -e "*                     DRBD Master Mount                    *"
 		echo -e "************************************************************"
   		drbdadm up drbd0
     		drbdadm primary drbd0 --force
       		mount /dev/drbd0 /vpbx_data
-		echo -e "************************************************************"
-		echo -e "*                Normalize Asterisk in Master              *"
-		echo -e "************************************************************"
-		rm -rf /var/log/asterisk 
-		rm -rf /var/lib/asterisk
-		rm -rf /var/lib/vitalpbx 
-		rm -rf /usr/lib/asterisk 
-		rm -rf /var/spool/asterisk 
-		rm -rf /etc/asterisk
-		cp -aR /vpbx_data/var/log/asterisk /var/log/asterisk
-		cp -aR /vpbx_data/var/lib/asterisk /var/lib/asterisk
-		cp -aR /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx
-		cp -aR /vpbx_data/usr/lib/asterisk /usr/lib/asterisk
-		cp -aR /vpbx_data/var/spool/asterisk /var/spool/asterisk
-		cp -aR /vpbx_data/etc/asterisk /etc/asterisk
-    		echo -e "************************************************************"
-		echo -e "*         Switch to DRBD Disk from Master to Slave         *"
-		echo -e "************************************************************"
-		cd /		
-  		umount /vpbx_data
-		drbdadm secondary drbd0
-  		ssh root@$ip_standby "drbdadm up drbd0"
-		ssh root@$ip_standby "drbdadm primary drbd0 --force"
-  		ssh root@$ip_standby "mount /dev/drbd0 /vpbx_data"
-  		echo -e "************************************************************"
-		echo -e "*                 Normalize MariaDB in Slave              *"
-		echo -e "************************************************************"
-		ssh root@$ip_standby "sed -i 's/vpbx_data\/mysql\/data/var\/lib\/mysql/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
-		echo -e "************************************************************"
-		echo -e "*                Normalize Asterisk in Slave              *"
-		echo -e "************************************************************"
-		ssh root@$ip_standby "rm -rf /var/log/asterisk"
-		ssh root@$ip_standby "rm -rf /var/lib/asterisk"
-		ssh root@$ip_standby "rm -rf /var/lib/vitalpbx"
-		ssh root@$ip_standby "rm -rf /usr/lib/asterisk"
-		ssh root@$ip_standby "rm -rf /var/spool/asterisk" 
-		ssh root@$ip_standby "rm -rf /etc/asterisk"
-		ssh root@$ip_standby "cp -aR /vpbx_data/var/log/asterisk /var/log/asterisk"
-		ssh root@$ip_standby "cp -aR /vpbx_data/var/lib/asterisk /var/lib/asterisk"
-		ssh root@$ip_standby "cp -aR /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx"
-		ssh root@$ip_standby "cp -aR /vpbx_data/usr/lib/asterisk /usr/lib/asterisk"
-		ssh root@$ip_standby "cp -aR /vpbx_data/var/spool/asterisk /var/spool/asterisk"
-		ssh root@$ip_standby "cp -aR /vpbx_data/etc/asterisk /etc/asterisk"
 		echo -e "************************************************************"
 		echo -e "*            Creating Welcome message original             *"
 		echo -e "************************************************************"
@@ -254,15 +173,6 @@ echo -e "*****************************************************************"
 		ssh root@$ip_standby "rm -rf /usr/local/bin/bascul"
 		ssh root@$ip_standby "rm -rf /usr/local/bin/role"
   		ssh root@$ip_standby "rm -rf /usr/local/bin/drbdsplit"
-		echo -e "************************************************************"
-		echo -e "*  Remove memory Firewall Rules in Server 1 and 2 and App  *"
-		echo -e "************************************************************"
-		firewall-cmd --remove-service=high-availability
-		firewall-cmd --runtime-to-permanent
-		firewall-cmd --reload
-		ssh root@$ip_standby "firewall-cmd --remove-service=high-availability"
-		ssh root@$ip_standby "firewall-cmd --runtime-to-permanent"
-		ssh root@$ip_standby "firewall-cmd --reload"
 		echo -e "************************************************************"
 		echo -e "*                      Enable Services                     *"
 		echo -e "************************************************************"   
@@ -282,41 +192,12 @@ echo -e "*****************************************************************"
   		ssh root@$ip_standby "systemctl enable vpbx-monitor"
 		ssh root@$ip_standby "systemctl restart fail2ban"
   		ssh root@$ip_standby "systemctl restart vpbx-monitor"
-		echo -e "************************************************************"
-		echo -e "*           Removing DRBD Devices and Volumes              *"
-		echo -e "************************************************************"  
-    		drbdsetup detach /dev/drbd0
-		drbdsetup del-minor /dev/drbd0
-  
-  		ssh root@$ip_standby "systemctl stop drbd"
-		ssh root@$ip_standby "drbdsetup detach /dev/drbd0"
-		ssh root@$ip_standby "drbdsetup del-minor /dev/drbd0"
-  
-		rm -rf /etc/drbd.d/global_common.conf
-    		mv /etc/drbd.d/global_common.conf.orig /etc/drbd.d/global_common.conf
-		ssh root@$ip_standby "rm -rf /etc/drbd.d/global_common.conf"
-  		ssh root@$ip_standby "mv /etc/drbd.d/global_common.conf.orig /etc/drbd.d/global_common.conf"
-		rm -rf /etc/drbd.d/drbd0.res
-    		ssh root@$ip_standby "rm -rf /etc/drbd.d/drbd0.res"
-      		systemctl disable drbd
-		systemctl stop drbd
-      		ssh root@$ip_standby "systemctl disable drbd"
-		ssh root@$ip_standby "systemctl stop drbd"
-  		rm -rf /vpbx_data
-    		ssh root@$ip_standby "rm -rf /vpbx_data"
-		echo -e "************************************************************"
-		echo -e "*                Recovery Databases                        *"
-		echo -e "************************************************************" 
-		mysql mysql -u root <  all_databases.sql
-		cat > /tmp/mysqldump.sh << EOF
-		#!/bin/bash
-		mysql mysql -u root <  /tmp/all_databases.sql 
-		EOF
-		scp /tmp/mysqldump.sh root@$ip_standby:/tmp/mysqldump.sh
-		ssh root@$ip_standby "chmod +x /tmp/mysqldump.sh"
-		ssh root@$ip_standby "/tmp/./mysqldump.sh"
     		echo -e "************************************************************"
 		echo -e "*            Cluster destroyed successfully                *"
+  		echo -e "*     Remember that because the disk partition where       *"
+    		echo -e "*    the system is installed is much smaller than          *"
+      		echo -e "*           the partition where the data is,               *"
+		echo -e "*   	  it is not possible to remove the DRBD.            *"
 		echo -e "************************************************************"
 	fi
 
