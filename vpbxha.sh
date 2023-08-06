@@ -1,7 +1,7 @@
 #!/bin/bash
 # This code is the property of VitalPBX LLC Company
 # License: Proprietary
-# Date: 1-Agu-2023
+# Date: 6-Agu-2023
 # VitalPBX Hight Availability with DRBD, Corosync, PCS and Pacemaker.
 #
 set -e
@@ -668,9 +668,9 @@ scp destroy.sh root@$ip_standby:/usr/share/vitalpbx/ha/destroy.sh
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/destroy.sh"
 scp rebuild.sh root@$ip_standby:/usr/share/vitalpbx/ha/rebuild.sh
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/rebuild.sh"
-scp step.sh root@$ip_standby:/usr/share/vitalpbx/ha/step.txt
+scp step.txt root@$ip_standby:/usr/share/vitalpbx/ha/step.txt
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/step.txt"
-scp config.sh root@$ip_standby:/usr/share/vitalpbx/ha/config.txt
+scp config.txt root@$ip_standby:/usr/share/vitalpbx/ha/config.txt
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/config.txt"
 
 vitalpbx_cluster_ok:
