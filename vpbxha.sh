@@ -202,6 +202,9 @@ case $step in
 	24)
 		start="ceate_welcome_message"
 	;;
+	25)
+		start="vitalpbx_ceate_destroy"
+	;;
 esac
 jumpto $start
 echo -e "*** Done Step 1 ***"
@@ -627,6 +630,18 @@ scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalp
 ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
 echo -e "*** Done Step 25 END ***"
 echo -e "25"	> step.txt
+
+vitalpbx_ceate_destroy:
+echo -e "************************************************************"
+echo -e "*             Creating VitalPBX destroy Command             *"
+echo -e "************************************************************"
+wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/destroy
+yes | cp -fr drbdsplit /usr/local/bin/destroy
+chmod +x /usr/local/bin/destroy
+scp /usr/local/bin/drbdsplit root@$ip_standby:/usr/local/bin/destroy
+ssh root@$ip_standby 'chmod +x /usr/local/bin/destroy'
+echo -e "*** Done Step 26 ***"
+echo -e "26"	> step.txt
 
 vitalpbx_cluster_ok:
 echo -e "************************************************************"
