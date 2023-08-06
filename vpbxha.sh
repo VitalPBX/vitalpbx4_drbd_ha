@@ -2,7 +2,7 @@
 # This code is the property of VitalPBX LLC Company
 # License: Proprietary
 # Date: 1-Agu-2023
-# VitalPBX Hight Availability with MariaDB Replica, Corosync, PCS, Pacemaker and Lsync
+# VitalPBX Hight Availability with DRBD, Corosync, PCS and Pacemaker.
 #
 set -e
 function jumpto
