@@ -664,13 +664,13 @@ echo -e "26"	> step.txt
 ssh root@$ip_standby "mkdir -p /usr/share/vitalpbx/ha"
 scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/vpbxha.sh
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/vpbxha.sh"
-scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/destroy.sh
+scp destroy.sh root@$ip_standby:/usr/share/vitalpbx/ha/destroy.sh
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/destroy.sh"
-scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/rebuild.sh
+scp rebuild.sh root@$ip_standby:/usr/share/vitalpbx/ha/rebuild.sh
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/rebuild.sh"
-scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/step.txt
+scp step.sh root@$ip_standby:/usr/share/vitalpbx/ha/step.txt
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/step.txt"
-scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/config.txt
+scp config.sh root@$ip_standby:/usr/share/vitalpbx/ha/config.txt
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/config.txt"
 
 vitalpbx_cluster_ok:
