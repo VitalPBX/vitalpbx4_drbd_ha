@@ -339,12 +339,23 @@ startup {
         degr-wfc-timeout 3;
 	outdated-wfc-timeout 2;
 }
+syncer {
+	rate 10M;
+ 	verify-alg md5;
+}
+net {
+    after-sb-0pri discard-older-primary;
+    after-sb-1pri discard-secondary;
+    after-sb-2pri call-pri-lost-after-sb;
+}
+handlers {
+    pri-lost-after-sb "/sbin/reboot";
+}
 on $host_master {
 	device /dev/drbd0;
    	disk /dev/$disk;
    	address $ip_master:7789;
 	meta-disk internal;
-	}
 on $host_standby {
 	device /dev/drbd0;
    	disk /dev/$disk;
