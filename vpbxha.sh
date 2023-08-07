@@ -333,6 +333,11 @@ scp /etc/drbd.d/global_common.conf root@$ip_standby:/etc/drbd.d/global_common.co
 
 cat > /etc/drbd.d/drbd0.res << EOF
 resource drbd0 {
+startup {
+        wfc-timeout  5;
+        degr-wfc-timeout 30;
+        become-primary-on both;
+}
 on $host_master {
 	device /dev/drbd0;
    	disk /dev/$disk;
@@ -490,7 +495,8 @@ cp -aR /var/lib/mysql/* /vpbx_data/mysql/data
 chown -R mysql:mysql /vpbx_data/mysql
 sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf
 ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/mysql/mariadb.conf.d/50-server.cnf"
-pcs resource create mysql ocf:heartbeat:mysql binary="/usr/bin/mysqld_safe" config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/vpbx_data/mysql/data" pid="/run/mysqld/mysql.pid" socket="/run/mysqld/mysql.sock" additional_parameters="--bind-address=0.0.0.0" op start timeout=60s op stop timeout=60s op monitor interval=20s timeout=30s on-fail=standby
+#pcs resource create mysql ocf:heartbeat:mysql binary="/usr/bin/mysqld_safe" config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/vpbx_data/mysql/data" pid="/run/mysqld/mysql.pid" socket="/run/mysqld/mysql.sock" additional_parameters="--bind-address=0.0.0.0" op start timeout=60s op stop timeout=60s op monitor interval=20s timeout=30s on-fail=standby
+pcs resource create mysql service:mariadb op monitor interval=30s
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg --config
 pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
