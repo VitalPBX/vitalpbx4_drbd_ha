@@ -48,4 +48,3 @@ pcs status resources
 echo -e ""
 echo -e "Servers Status"
 pcs cluster pcsd-status
-drbdadm status
