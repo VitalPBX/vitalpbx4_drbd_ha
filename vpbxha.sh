@@ -356,6 +356,7 @@ on $host_master {
    	disk /dev/$disk;
    	address $ip_master:7789;
 	meta-disk internal;
+}
 on $host_standby {
 	device /dev/drbd0;
    	disk /dev/$disk;
