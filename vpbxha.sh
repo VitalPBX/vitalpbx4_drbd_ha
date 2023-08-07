@@ -335,8 +335,9 @@ cat > /etc/drbd.d/drbd0.res << EOF
 resource drbd0 {
 startup {
         wfc-timeout  5;
-        degr-wfc-timeout 30;
-        become-primary-on both;
+	outdated-wfc-timeout 3;
+        degr-wfc-timeout 3;
+	outdated-wfc-timeout 2;
 }
 on $host_master {
 	device /dev/drbd0;
