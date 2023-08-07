@@ -179,10 +179,10 @@ case $step in
 		start="create_mariadb_service"
 	;;
 	17)
-		start="create_asterisk_service"
+		start="copy_asterisk_files"
 	;;
 	18)
-		start="copy_asterisk_files"
+		start="create_asterisk_service"
 	;;
 	19)
 		start="create_vitalpbx_service"
@@ -427,8 +427,7 @@ echo -e "*            Creating Floating IP in Master                *"
 echo -e "************************************************************"
 pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask=$ip_floating_mask op monitor interval=30s on-fail=restart
 pcs cluster cib drbd_cfg
-sleep 2
-pcs cluster cib-push drbd_cfg
+pcs cluster cib-push drbd_cfg --config
 echo -e "*** Done Step 13 ***"
 echo -e "13"	> step.txt
 
@@ -500,28 +499,6 @@ pcs cluster cib-push fs_cfg --config
 echo -e "*** Done Step 17 ***"
 echo -e "17"	> step.txt
 
-create_asterisk_service:
-echo -e "************************************************************"
-echo -e "*          Create Asterisk Service in Server 1             *"
-echo -e "************************************************************"
-sed -i 's/RestartSec=10/RestartSec=1/g'  /usr/lib/systemd/system/asterisk.service
-sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
-sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
-pcs resource create asterisk service:asterisk op monitor interval=30s
-pcs cluster cib fs_cfg 
-pcs cluster cib-push fs_cfg --config 
-pcs -f fs_cfg constraint colocation add asterisk with ClusterIP INFINITY
-pcs -f fs_cfg constraint order mysql then asterisk
-pcs cluster cib-push fs_cfg --config 
-#Changing these values from 15s (default) to 120s is very important 
-#since depending on the server and the number of extensions 
-#the Asterisk can take more than 15s to start
-pcs resource update asterisk op stop timeout=120s
-pcs resource update asterisk op start timeout=120s
-pcs resource update asterisk op restart timeout=120s
-echo -e "*** Done Step 18 ***"
-echo -e "18"	> step.txt
-
 copy_asterisk_files:
 echo -e "************************************************************"
 echo -e "*            Copy Asterisk File in DRBD Disk               *"
@@ -576,6 +553,28 @@ rm -f /mnt/usr-lib64-asterisk.tgz
 rm -f /mnt/var-spool-asterisk.tgz 
 rm -f /mnt/etc-asterisk.tgz
 
+echo -e "*** Done Step 18 ***"
+echo -e "18"	> step.txt
+
+create_asterisk_service:
+echo -e "************************************************************"
+echo -e "*          Create Asterisk Service in Server 1             *"
+echo -e "************************************************************"
+sed -i 's/RestartSec=10/RestartSec=1/g'  /usr/lib/systemd/system/asterisk.service
+sed -i 's/Wants=mariadb.service/#Wants=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
+sed -i 's/After=mariadb.service/#After=mariadb.service/g'  /usr/lib/systemd/system/asterisk.service
+pcs resource create asterisk service:asterisk op monitor interval=30s
+pcs cluster cib fs_cfg 
+pcs cluster cib-push fs_cfg --config 
+pcs -f fs_cfg constraint colocation add asterisk with ClusterIP INFINITY
+pcs -f fs_cfg constraint order mysql then asterisk
+pcs cluster cib-push fs_cfg --config 
+#Changing these values from 15s (default) to 120s is very important 
+#since depending on the server and the number of extensions 
+#the Asterisk can take more than 15s to start
+pcs resource update asterisk op stop timeout=120s
+pcs resource update asterisk op start timeout=120s
+pcs resource update asterisk op restart timeout=120s
 echo -e "*** Done Step 19 ***"
 echo -e "19"	> step.txt
 
