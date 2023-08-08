@@ -63,7 +63,7 @@ if [[ "${perform_bascul}" = "yes" ]]; then
                         pcs resource move ${resource} ${host_standby}
                 fi
         done
-        sleep 5 && pcs node standby $host_master & #Standby current Master node after five seconds
+        sleep 10 && pcs node standby $host_master & #Standby current Master node after five seconds
         sleep 20 && pcs node unstandby $host_master & #Automatically Unstandby current Master node after$
         #Move the ClusterIP resource to standby node
         echo "Moving ClusterIP from ${host_master} to ${host_standby}"
