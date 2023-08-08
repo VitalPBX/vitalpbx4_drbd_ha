@@ -197,7 +197,7 @@ root@vitalpbx-<strong>master</strong>:~# bascul
 *All calls in progress will be lost and the system will be *
 *     be in an unavailable state for a few seconds.        *
 ************************************************************
-Are you sure to switch from vitalpbx<strong>master</strong>.local to vitalpbx<strong>slave</strong>.local? (yes,no) >
+Are you sure to switch from vitalpbx-<strong>master</strong>.local to vitalpbx-<strong>slave</strong>.local? (yes,no) >
 </pre>
 
 This action convert the vitalpbx<strong>master</strong>.local to Standby and vitalpbx<strong>slave</strong>.local to Master. If you want to return to default do the same again.<br>
