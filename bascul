@@ -1,7 +1,7 @@
 #!/bin/bash
 # This code is the property of VitalPBX LLC Company
 # License: Proprietary
-# Date: 1-Agu-2023
+# Date: 8-Agu-2023
 # Change the status of the servers, the Master goes to Stanby and the Standby goes to Master.
 #funtion for draw a progress bar
 #You must pass as argument the amount of secconds that the progress bar will run
