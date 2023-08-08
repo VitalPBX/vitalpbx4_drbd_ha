@@ -514,7 +514,7 @@ ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/m
 pcs resource create mariadb service:mariadb op monitor interval=30s
 pcs cluster cib fs_cfg
 pcs cluster cib-push fs_cfg --config
-pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
+pcs -f fs_cfg constraint colocation add mariadb with ClusterIP INFINITY
 pcs -f fs_cfg constraint order DrbdFS then mariadb
 pcs cluster cib-push fs_cfg --config
 echo -e "*** Done Step 17 ***"
