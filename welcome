@@ -1,7 +1,7 @@
 #!/bin/bash
 # This code is the property of VitalPBX LLC Company
 # License: Proprietary
-# Date: 1-Agu-2023
+# Date: 8-Agu-2023
 # Show the Role of Server.
 #Bash Colour Codes
 green="\033[00;32m"
