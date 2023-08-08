@@ -447,7 +447,7 @@ pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask
 pcs cluster cib drbd_cfg
 pcs cluster cib-push drbd_cfg --config
 #Prevent Resources from Moving after Recovery
-pcs resource defaults update resource-stickiness=100
+pcs resource defaults update resource-stickiness=INFINITY
 echo -e "*** Done Step 13 ***"
 echo -e "13"	> step.txt
 
