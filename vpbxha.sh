@@ -197,12 +197,9 @@ case $step in
 		start="vitalpbx_create_role"
 	;;
 	23)
-		start="vitalpbx_create_drbdsplit"
-	;;
-	24)
 		start="ceate_welcome_message"
 	;;
-	25)
+	24)
 		start="vitalpbx_ceate_destroy_rebuild"
 	;;
 esac
@@ -649,18 +646,6 @@ ssh root@$ip_standby 'chmod +x /usr/local/bin/role'
 echo -e "*** Done Step 23 ***"
 echo -e "23"	> step.txt
 
-vitalpbx_create_drbdsplit:
-echo -e "************************************************************"
-echo -e "*           Creating VitalPBX mariadbfix Command           *"
-echo -e "************************************************************"
-wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/drbdsplit
-yes | cp -fr drbdsplit /usr/local/bin/drbdsplit
-chmod +x /usr/local/bin/drbdsplit
-scp /usr/local/bin/drbdsplit root@$ip_standby:/usr/local/bin/drbdsplit
-ssh root@$ip_standby 'chmod +x /usr/local/bin/drbdsplit'
-echo -e "*** Done Step 24 ***"
-echo -e "24"	> step.txt
-
 ceate_welcome_message:
 echo -e "************************************************************"
 echo -e "*              Creating Welcome message                    *"
@@ -670,8 +655,8 @@ chmod 755 /etc/update-motd.d/20-vitalpbx
 echo -e "*** Done ***"
 scp /etc/update-motd.d/20-vitalpbx root@$ip_standby:/etc/update-motd.d/20-vitalpbx
 ssh root@$ip_standby "chmod 755 /etc/update-motd.d/20-vitalpbx"
-echo -e "*** Done Step 25 END ***"
-echo -e "25"	> step.txt
+echo -e "*** Done Step 24 ***"
+echo -e "24"	> step.txt
 
 vitalpbx_ceate_destroy_rebuild:
 echo -e "************************************************************"
@@ -681,8 +666,8 @@ wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/destroy.s
 chmod +x destroy.sh
 wget https://raw.githubusercontent.com/VitalPBX/vitalpbx4_drbd_ha/main/rebuild.sh
 chmod +x rebuild.sh
-echo -e "*** Done Step 26 ***"
-echo -e "26"	> step.txt
+echo -e "*** Done Step 25 END***"
+echo -e "25"	> step.txt
 ssh root@$ip_standby "mkdir -p /usr/share/vitalpbx/ha"
 scp vpbxha.sh root@$ip_standby:/usr/share/vitalpbx/ha/vpbxha.sh
 ssh root@$ip_standby "chmod 755 /usr/share/vitalpbx/ha/vpbxha.sh"
