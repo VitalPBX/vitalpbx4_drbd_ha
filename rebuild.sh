@@ -307,7 +307,7 @@ pcs cluster start --all
 pcs cluster enable --all
 pcs property set stonith-enabled=false
 pcs property set no-quorum-policy=ignore
-pcs resource defaults update resource-stickiness=100
+pcs resource defaults update resource-stickiness=INFINITY
 echo -e "*** Done Step 11 ***"
 echo -e "11"	> step.txt
 
