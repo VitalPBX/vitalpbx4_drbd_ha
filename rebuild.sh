@@ -307,6 +307,7 @@ pcs cluster start --all
 pcs cluster enable --all
 pcs property set stonith-enabled=false
 pcs property set no-quorum-policy=ignore
+pcs resource defaults update resource-stickiness=100
 echo -e "*** Done Step 11 ***"
 echo -e "11"	> step.txt
 
@@ -378,8 +379,8 @@ ssh root@$ip_standby "sed -i 's/var\/lib\/mysql/vpbx_data\/mysql\/data/g' /etc/m
 pcs resource create mysql ocf:heartbeat:mysql binary="/usr/bin/mysqld_safe" config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/vpbx_data/mysql/data" pid="/run/mysqld/mysql.pid" socket="/run/mysqld/mysql.sock" additional_parameters="--bind-address=0.0.0.0" op start timeout=60s op stop timeout=60s op monitor interval=20s timeout=30s on-fail=standby
 pcs cluster cib fs_cfg 
 pcs cluster cib-push fs_cfg --config 
-pcs -f fs_cfg constraint colocation add mysql with ClusterIP INFINITY
-pcs -f fs_cfg constraint order DrbdFS then mysql
+pcs -f fs_cfg constraint colocation add mariadb with ClusterIP INFINITY
+pcs -f fs_cfg constraint order DrbdFS then mariadb
 pcs cluster cib-push fs_cfg --config 
 echo -e "*** Done Step 16 ***"
 echo -e "16"	> step.txt
@@ -392,7 +393,7 @@ pcs resource create asterisk service:asterisk op monitor interval=30s
 pcs cluster cib fs_cfg 
 pcs cluster cib-push fs_cfg --config 
 pcs -f fs_cfg constraint colocation add asterisk with ClusterIP INFINITY
-pcs -f fs_cfg constraint order mysql then asterisk
+pcs -f fs_cfg constraint order mariadb then asterisk
 pcs cluster cib-push fs_cfg --config 
 #Changing these values from 15s (default) to 120s is very important 
 #since depending on the server and the number of extensions 
