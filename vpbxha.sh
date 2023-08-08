@@ -436,8 +436,6 @@ pcs cluster start --all
 pcs cluster enable --all
 pcs property set stonith-enabled=false
 pcs property set no-quorum-policy=ignore
-#Prevent Resources from Moving after Recovery
-pcs resource meta ClusterIP resource-stickiness=100
 echo -e "*** Done Step 12 ***"
 echo -e "12"	> step.txt
 
@@ -448,6 +446,8 @@ echo -e "************************************************************"
 pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=$ip_floating cidr_netmask=$ip_floating_mask op monitor interval=30s on-fail=restart
 pcs cluster cib drbd_cfg
 pcs cluster cib-push drbd_cfg --config
+#Prevent Resources from Moving after Recovery
+pcs resource defaults update resource-stickiness=100
 echo -e "*** Done Step 13 ***"
 echo -e "13"	> step.txt
 
