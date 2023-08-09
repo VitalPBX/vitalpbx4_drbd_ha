@@ -524,6 +524,7 @@ echo -e "************************************************************"
 tar -zcvf /mnt/var-asterisk.tgz /var/log/asterisk 
 tar -zcvf /mnt/var-lib-asterisk.tgz /var/lib/asterisk
 tar -zcvf /mnt/var-lib-vitalpbx.tgz /var/lib/vitalpbx
+tar -zcvf /mnt/etc-vitalpbx.tgz /etc/vitalpbx
 tar -zcvf /mnt/usr-lib-asterisk.tgz /usr/lib/asterisk
 tar -zcvf /mnt/var-spool-asterisk.tgz /var/spool/asterisk
 tar -zcvf /mnt/etc-asterisk.tgz /etc/asterisk
@@ -531,6 +532,7 @@ tar -zcvf /mnt/etc-asterisk.tgz /etc/asterisk
 tar xvfz /mnt/var-asterisk.tgz -C /vpbx_data
 tar xvfz /mnt/var-lib-asterisk.tgz -C /vpbx_data
 tar xvfz /mnt/var-lib-vitalpbx.tgz -C /vpbx_data
+tar xvfz /mnt/etc-vitalpbx.tgz -C /vpbx_data
 tar xvfz /mnt/usr-lib-asterisk.tgz -C /vpbx_data
 tar xvfz /mnt/var-spool-asterisk.tgz -C /vpbx_data
 tar xvfz /mnt/etc-asterisk.tgz -C /vpbx_data
@@ -538,14 +540,16 @@ chmod -R 775 /vpbx_data/var/log/asterisk
 
 rm -rf /var/log/asterisk 
 rm -rf /var/lib/asterisk
-rm -rf /var/lib/vitalpbx 
+rm -rf /var/lib/vitalpbx
+rm -rf /etc/vitalpbx 
 rm -rf /usr/lib/asterisk
 rm -rf /var/spool/asterisk
 rm -rf /etc/asterisk 
 
 ln -s /vpbx_data/var/log/asterisk /var/log/asterisk 
 ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk
-ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx 
+ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx
+ln -s /vpbx_data/etc/vitalpbx /etc/vitalpbx 
 ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk 
 ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk 
 ln -s /vpbx_data/etc/asterisk /etc/asterisk
@@ -553,6 +557,7 @@ ln -s /vpbx_data/etc/asterisk /etc/asterisk
 ssh root@$ip_standby 'rm -rf /var/log/asterisk'
 ssh root@$ip_standby 'rm -rf /var/lib/asterisk'
 ssh root@$ip_standby 'rm -rf /var/lib/vitalpbx'
+ssh root@$ip_standby 'rm -rf /etc/vitalpbx'
 ssh root@$ip_standby 'rm -rf /usr/lib/asterisk'
 ssh root@$ip_standby 'rm -rf /var/spool/asterisk'
 ssh root@$ip_standby 'rm -rf /etc/asterisk'
@@ -560,14 +565,16 @@ ssh root@$ip_standby 'rm -rf /etc/asterisk'
 ssh root@$ip_standby 'ln -s /vpbx_data/var/log/asterisk /var/log/asterisk'
 ssh root@$ip_standby 'ln -s /vpbx_data/var/lib/asterisk /var/lib/asterisk'
 ssh root@$ip_standby 'ln -s /vpbx_data/var/lib/vitalpbx /var/lib/vitalpbx'
+ssh root@$ip_standby 'ln -s /vpbx_data/etc/vitalpbx /etc/vitalpbx'
 ssh root@$ip_standby 'ln -s /vpbx_data/usr/lib/asterisk /usr/lib/asterisk'
 ssh root@$ip_standby 'ln -s /vpbx_data/var/spool/asterisk /var/spool/asterisk' 
 ssh root@$ip_standby 'ln -s /vpbx_data/etc/asterisk /etc/asterisk'
 
 rm -f /mnt/var-asterisk.tgz 
 rm -f /mnt/var-lib-asterisk.tgz
-rm -f /mnt/var-lib-ombutel.tgz
-rm -f /mnt/usr-lib64-asterisk.tgz 
+rm -f /mnt/var-lib-vitalpbx.tgz
+rm -f /mnt/etc-vitalpbx.tgz
+rm -f /mnt/usr-lib-asterisk.tgz 
 rm -f /mnt/var-spool-asterisk.tgz 
 rm -f /mnt/etc-asterisk.tgz
 
