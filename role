@@ -46,5 +46,5 @@ echo -e "************************************************************"
 pcs status resources
 echo -e "************************************************************"
 echo -e ""
-echo -e "Server Status"
+echo -e "Servers Status"
 pcs cluster pcsd-status
