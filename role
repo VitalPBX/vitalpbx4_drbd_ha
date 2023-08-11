@@ -41,9 +41,8 @@ ${txtrst}
 "
 echo -e ""
 echo -e "************************************************************"
-echo -e "*                  Servers Status                          *"
+echo -e "*            Servers Status: $server_mode                       *"
 echo -e "************************************************************"
-echo -e $server_mode
 pcs status resources
 echo -e ""
 echo -e "Servers Status"
