@@ -5,6 +5,7 @@
 # Show the Role of Server.
 #Bash Colour Codes
 green="\033[00;32m"
+yellow="\033[00;33m"
 txtrst="\033[00;0m"
 linux_ver=`cat /etc/os-release | grep -e PRETTY_NAME | awk -F '=' '{print $2}' | xargs`
 vpbx_version=`aptitude versions vitalpbx | awk '{ print $2 }'`
@@ -41,7 +42,11 @@ ${txtrst}
 "
 echo -e ""
 echo -e "************************************************************"
-echo -e "            Server Status: $server_mode                    "
+if [[ "${server_mode}" = "Master" ]]; then
+echo -e "*                Server Status: ${green}$server_mode${txtrst}                     *"
+else
+echo -e "*                Server Status: ${yellow}$server_mode${txtrst}                     *"
+fi
 echo -e "************************************************************"
 pcs status resources
 echo -e "************************************************************"
