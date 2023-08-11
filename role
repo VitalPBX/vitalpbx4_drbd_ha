@@ -43,7 +43,7 @@ echo -e ""
 echo -e "************************************************************"
 echo -e "*                  Servers Status                          *"
 echo -e "************************************************************"
-echo -e "Master"
+echo -e $server_mode
 pcs status resources
 echo -e ""
 echo -e "Servers Status"
