@@ -41,10 +41,10 @@ ${txtrst}
 "
 echo -e ""
 echo -e "************************************************************"
-echo -e "            Servers Status: $server_mode                    "
+echo -e "            Server Status: $server_mode                    "
 echo -e "************************************************************"
 pcs status resources
 echo -e "************************************************************"
 echo -e ""
-echo -e "Servers Status"
+echo -e "Server Status"
 pcs cluster pcsd-status
